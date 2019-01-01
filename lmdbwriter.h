@@ -1,4 +1,4 @@
-#include "handlerlmdb-config.h"
+#include "wacs-config.h"
 
 /**
   * Return:  0- success
@@ -9,7 +9,7 @@
   */
 int run
 (
-		Config *config
+		WacsConfig *config
 );
 
 /**
@@ -18,7 +18,7 @@ int run
   */
 int stop
 (
-		Config *config
+		WacsConfig *config
 );
 
-int reload(Config *config);
+int reload(WacsConfig *config);

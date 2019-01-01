@@ -2,8 +2,8 @@
  *	Write to the LMDB database
  */
 #include <algorithm>
-#include <string.h>
-#include <stdio.h>
+#include <iostream>
+#include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -13,10 +13,14 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 
+#include "errorcodes.h"
 #include "lmdbwriter.h"
 #include "lmdb.h"
 
-using namespace google::protobuf;
+#define BUF_SIZE	1024
+
+#define LOG(verbosity) \
+	std::cerr
 
 /**
  * @brief LMDB environment(transaction, cursor)
@@ -37,7 +41,7 @@ typedef struct dbenv {
 bool open_lmdb
 (
 	struct dbenv *env,
-	Config *config
+	WacsConfig *config
 )
 {
 	int rc = mdb_env_create(&env->env);
@@ -93,30 +97,41 @@ bool close_lmdb
 	return true;
 }
 
+static size_t getKey
+(
+	int mode, 
+	void *keybuffer,
+	size_t keysize,
+	void *buffer,
+	size_t size
+)
+{
+	switch (mode) {
+		case 0:
+			return 10;
+		case 1:
+			return 4;
+	}
+}
+
 /**
  * @brief Store input packet to the LMDB
  * @param env database env
- * @param options   cache
  * @param buffer buffer
  * @param buffer_size buffer size
- * @param messageTypeNAddress address
- * @param message message
  * @return 0 - success
  */
 int put_db
 (
-		struct dbenv *env,
-		Pkt2OptionsCache *options,
-		void *buffer,
-		int buffer_size,
-		MessageTypeNAddress *messageTypeNAddress,
-		const google::protobuf::Message *message
+	struct dbenv *env,
+	void *buffer,
+	int buffer_size
 )
 {
 	MDB_val key, data;
 	char keybuffer[2048];
 
-	key.mv_size = options->getKey(messageTypeNAddress->message_type, keybuffer, sizeof(keybuffer), message);
+	key.mv_size = getKey(0, keybuffer, sizeof(keybuffer), buffer, buffer_size);
 	if (key.mv_size == 0)
 		return 0;	// No key, no store
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
@@ -154,7 +169,7 @@ int put_db
  */
 int run
 (
-	Config *config
+	WacsConfig *config
 )
 {
 START:
@@ -183,36 +198,18 @@ START:
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	ProtobufDeclarations pd(config->proto_path, config->verbosity);
-	if (!pd.getMessageCount())
-	{
-		LOG(ERROR) << ERR_LOAD_PROTO << config->proto_path;
-		return ERRCODE_LOAD_PROTO;
-	}
-	Pkt2OptionsCache options(&pd);
 
-	void *buffer;
-	if (config->buffer_size > 0)
+	void *buffer = malloc(BUF_SIZE);
+	if (!buffer)
 	{
-		buffer = malloc(config->buffer_size);
-	    if (!buffer)
-		{
-	    	LOG(ERROR) << ERR_NO_MEMORY;
-	    	return ERRCODE_NO_MEMORY;
-		}
+		LOG(ERROR) << ERR_NO_MEMORY;
+		return ERRCODE_NO_MEMORY;
 	}
-	else
-		buffer = NULL;
 
     while (!config->stop_request)
     {
     	int bytes;
-    	if (config->buffer_size > 0)
-    		bytes = nn_recv(accept_socket, buffer, config->buffer_size, 0);
-    	else
-    		bytes = nn_recv(accept_socket, &buffer, NN_MSG, 0);
-
-		
+   		bytes = nn_recv(accept_socket, &buffer, NN_MSG, 0);
     	if (bytes < 0)
     	{
 			if (errno == EINTR) 
@@ -225,26 +222,8 @@ START:
 				LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno);
     		continue;
     	}
-		MessageTypeNAddress messageTypeNAddress;
-		Message *m = readDelimitedMessage(&pd, buffer, bytes, &messageTypeNAddress);
-		if (m)
-		{
-			if (config->allowed_messages.size())
-			{
-				if (std::find(config->allowed_messages.begin(), config->allowed_messages.end(), m->GetTypeName()) == config->allowed_messages.end())
-				{
-					LOG(INFO) << MSG_PACKET_REJECTED << m->GetTypeName();
-					continue;
-				}
-			}
-
-			put_db(&env, &options, buffer, bytes, &messageTypeNAddress, m);
-		}
-		else
-			LOG(ERROR) << ERR_DECODE_MESSAGE;
-
-		if (config->buffer_size <= 0)
-			nn_freemsg(buffer);
+		// put_db(&env, &options, buffer, bytes, &messageTypeNAddress, m);
+		nn_freemsg(buffer);
     }
 
 	r = 0;
@@ -277,7 +256,7 @@ START:
  */
 int stop
 (
-		Config *config
+		WacsConfig *config
 )
 {
     if (!config)
@@ -286,7 +265,7 @@ int stop
     return ERR_OK;
 }
 
-int reload(Config *config)
+int reload(WacsConfig *config)
 {
 	if (!config)
 		return ERRCODE_NO_CONFIG;

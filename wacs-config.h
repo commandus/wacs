@@ -1,10 +1,10 @@
 /**
-  * wpn options
+  * wacs options
   * @file wpn-config.h
   **/
 
-#ifndef WPN_CONFIG_H
-#define WPN_CONFIG_H	1
+#ifndef WACS_CONFIG_H
+#define WACS_CONFIG_H	1
 
 #include <string>
 #include <vector>
@@ -28,10 +28,13 @@ private:
 	);
 	int errorcode;
 public:
+	int stop_request;
+	std::string message_url;
 	int cmd;										///< CMD_*
 	int verbosity;									///< 0-quiet, 3- debug
-	std::string file_name;							///< config file, e.g. https://sure-phone.firebaseio.com"
-
+	std::string path;								///< database files lock.mdb, data.mdb directory path
+	int flags;
+	int mode;
 	WacsConfig();
 	WacsConfig
 	(

@@ -13,16 +13,19 @@
 #include <dlfcn.h>
 #endif
 
-#define DEF_FILE_NAME "./wacs.db"
-
 #include "platform.h"
 
 #define progname "wacs"
 
+#define DEF_QUEUE					"ipc:///tmp/wacs.nanomsg"
+#define DEF_DB_PATH					"."
+#define DEF_MODE					0664
+#define DEF_FLAGS					0
+
 #ifdef _MSC_VER
-static std::string getDefaultDatabaseFileName(const std::string &filename)
+static std::string getDefaultDatabaseFileName()
 {
-	std::string r = filename;
+	std::string r = "";
 	// Need a process with query permission set
 	HANDLE hToken = 0;
 	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
@@ -32,7 +35,7 @@ static std::string getDefaultDatabaseFileName(const std::string &filename)
 		DWORD size = sizeof(homedir);
 		if (GetUserProfileDirectoryA(hToken, homedir, &size) && (size > 0))
 		{
-			r = std::string(homedir, size - 1).append("\\").append(filename);
+			r = std::string(homedir, size - 1);
 		}
 		CloseHandle(hToken);
 	}
@@ -42,18 +45,18 @@ static std::string getDefaultDatabaseFileName(const std::string &filename)
 /**
 * https://stackoverflow.com/questions/2910377/get-home-directory-in-linux-c
 */
-static  std::string getDefaultDatabaseFileName(const std::string &filename)
+static  std::string getDefaultDatabasePath()
 {
 	struct passwd *pw = getpwuid(getuid());
 	const char *homedir = pw->pw_dir;
 	std::string r(homedir);
-	return r + "/" + filename;
+	return r;
 }
 #endif
 
 WacsConfig::WacsConfig()
 	: errorcode(0), cmd(0), verbosity(0), 
-	file_name(getDefaultDatabaseFileName(DEF_FILE_NAME))
+	path(getDefaultDatabasePath())
 {
 }
 	
@@ -82,14 +85,18 @@ int WacsConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_file_name = arg_str0("c", "config", "<file>", "Configuration file. Default ~/" DEF_FILE_NAME);
-	// other
+	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "Default " DEF_QUEUE);
+	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
+	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
+	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
+// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
 	struct arg_lit *a_help = arg_lit0("h", "help", "Show this help");
 	struct arg_end *a_end = arg_end(20);
 
 	void* argtable[] = { 
-		a_file_name,
+		a_message_url,
+		a_db_path, a_flags, a_mode,
 		a_verbosity, a_help, a_end 
 	};
 
@@ -104,10 +111,29 @@ int WacsConfig::parseCmd
 	// Parse the command line as defined by argtable[]
 	nerrors = arg_parse(argc, argv, argtable);
 
-	if (a_file_name->count)
-		file_name = *a_file_name->sval;
+	verbosity = a_verbosity->count;
+	if (a_message_url->count)
+		message_url = *a_message_url->sval;
 	else
-		file_name = getDefaultDatabaseFileName(DEF_FILE_NAME);
+		message_url = DEF_QUEUE;
+
+	if (a_db_path->count)
+		path = *a_db_path->sval;
+	else
+		path = DEF_DB_PATH;
+	char b[PATH_MAX];
+	path = std::string(realpath(path.c_str(), b));
+
+	if (a_mode->count)
+		mode = *a_mode->ival;
+	else
+		mode = DEF_MODE;
+
+	if (a_flags->count)
+		flags = *a_flags->ival;
+	else
+		flags = DEF_FLAGS;
+
 
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)

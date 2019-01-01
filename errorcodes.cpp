@@ -1,0 +1,80 @@
+#include "errorcodes.h"
+
+std:: string getErrorDescription(int code)
+{
+	switch (code)
+	{
+		case ERR_OK:
+			return "";
+		case ERRCODE_COMMAND:
+			return ERR_COMMAND;
+		case ERRCODE_PARSE_COMMAND:
+			return ERR_PARSE_COMMAND;
+		case ERRCODE_LMDB_TXN_BEGIN:
+			return ERR_LMDB_TXN_BEGIN;
+		case ERRCODE_LMDB_TXN_COMMIT:
+			return ERR_LMDB_TXN_COMMIT;
+		case ERRCODE_LMDB_OPEN:
+			return ERR_LMDB_OPEN;
+		case ERRCODE_LMDB_CLOSE:
+			return ERR_LMDB_OPEN;
+		case ERRCODE_LMDB_PUT:
+			return ERR_LMDB_PUT;
+		case ERRCODE_LMDB_GET:
+			return ERR_LMDB_GET;
+		case ERRCODE_NN_SOCKET:
+			return ERR_NN_SOCKET;
+		case ERRCODE_NN_CONNECT:
+			return ERR_NN_CONNECT;
+		case ERRCODE_NN_BIND:
+			return ERR_NN_BIND;
+		case ERRCODE_NN_SUBSCRIBE:
+			return ERR_NN_SUBSCRIBE;
+		case ERRCODE_NN_SHUTDOWN:
+			return ERR_NN_SHUTDOWN;
+		case ERRCODE_NN_RECV:
+			return ERR_NN_RECV;
+		case ERRCODE_NN_SEND:
+			return ERR_NN_SEND;
+		case ERRCODE_NN_SET_SOCKET_OPTION:
+			return ERR_NN_SET_SOCKET_OPTION;
+		case ERRCODE_NN_FREE_MSG:
+			return ERR_NN_FREE_MSG;
+		case ERRCODE_STOP:
+			return ERR_STOP;
+		case ERRCODE_NO_CONFIG:
+			return ERR_NO_CONFIG;
+		case ERRCODE_NO_MEMORY:
+			return ERR_NO_MEMORY;
+		case ERRCODE_SOCKET_SEND:
+			return ERR_SOCKET_SEND;
+		case ERRCODE_NOT_IMPLEMENTED:
+			return ERR_NOT_IMPLEMENTED;
+		case ERRCODE_GET_ADDRINFO:
+			return ERR_GET_ADDRINFO;
+		case ERRCODE_SOCKET_CREATE:
+			return ERR_SOCKET_CREATE;
+		case ERRCODE_SOCKET_SET_OPTIONS:
+			return ERR_SOCKET_SET_OPTIONS;
+		case ERRCODE_SOCKET_BIND:
+			return ERR_SOCKET_BIND;
+		case ERRCODE_SOCKET_CONNECT:
+			return ERR_SOCKET_CONNECT;
+		case ERRCODE_SOCKET_LISTEN:
+			return ERR_SOCKET_LISTEN;
+		case ERRCODE_SOCKET_READ:
+			return ERR_SOCKET_READ;
+		case ERRCODE_SOCKET_WRITE:
+			return ERR_SOCKET_WRITE;
+		case ERRCODE_NN_ACCEPT:
+			return ERR_NN_ACCEPT;
+		case ERRCODE_FORK:
+			return ERR_FORK;
+		case ERRCODE_EXEC:
+			return ERR_EXEC;
+		case ERRCODE_CONFIG:
+			return ERR_CONFIG;
+		default:
+			return "";
+	}
+}
