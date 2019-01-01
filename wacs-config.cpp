@@ -89,7 +89,12 @@ int WacsConfig::parseCmd
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
-// other
+
+	// deamon
+	struct arg_lit *a_daemonize = arg_lit0("d", "daemonize", "Start as daemon/service");
+	struct arg_int *a_max_fd = arg_int0(NULL, "maxfd", "<number>", "Set max file descriptors. 0- use default (1024).");
+
+	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
 	struct arg_lit *a_help = arg_lit0("h", "help", "Show this help");
 	struct arg_end *a_end = arg_end(20);
@@ -97,6 +102,7 @@ int WacsConfig::parseCmd
 	void* argtable[] = { 
 		a_message_url,
 		a_db_path, a_flags, a_mode,
+		a_daemonize, a_max_fd, 
 		a_verbosity, a_help, a_end 
 	};
 
@@ -134,6 +140,11 @@ int WacsConfig::parseCmd
 	else
 		flags = DEF_FLAGS;
 
+	daemonize = a_daemonize->count > 0;
+	if (a_max_fd > 0)
+		max_fd = *a_max_fd->ival;
+	else
+		max_fd = 0;
 
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)

@@ -11,25 +11,56 @@
 
 #include "platform.h"
 #include "wacs.h"
+#include "errorcodes.h"
+#include "daemonize.h"
 
 #define ERR_WSA		-1
+#define DEAMON_NAME	"wacsd"
 
-#ifdef _MSC_VER
+static WacsConfig *config = NULL;
 
-void setSignalHandler(int signal)
+void stopNWait()
+{
+	if (config)
+		stop(config);
+}
+
+void done()
 {
 }
 
+int reslt;
+
+void runner()
+{
+	if (!config)
+	{
+		std::cerr << ERR_NO_CONFIG;
+		return;
+	}
+	reslt = run(config);
+}
+
+#ifdef _MSC_VER
+void setSignalHandler(int signal)
+{
+}
 #else
 void signalHandler(int signal)
 {
 	switch(signal)
 	{
 	case SIGINT:
-		std::cerr << MSG_INTERRUPTED << std::endl;
+		std::cerr << MSG_INTERRUPTED;
+		stopNWait();
+		done();
+		break;
+	case SIGHUP:
+		std::cerr << MSG_RELOAD_CONFIG_REQUEST;
+		reload(config);
 		break;
 	default:
-		break;
+			std::cerr << MSG_SIGNAL << signal;
 	}
 }
 
@@ -73,16 +104,30 @@ int main(int argc, char** argv)
 #ifdef _MSC_VER
 	initWindows();
 #endif
-	// In windows, this will init the winsock stuff
+    reslt = 0;
 
-	WacsConfig config(argc, argv);
-	if (config.error())
-		exit(config.error());
+	config = new WacsConfig(argc, argv);
+	if (!config)
+		exit(ERRCODE_NO_CONFIG);
 
-	switch (config.cmd)
+    if (config->error() != 0)
 	{
-		default:
-			break;
+		std::cerr << ERR_NO_CONFIG;
+		exit(config->error());
 	}
-	return 0;
+
+    if (config->daemonize)
+	{
+		std::cerr << MSG_DAEMONIZE;
+		Daemonize daemonize(DEAMON_NAME, config->path, runner, stopNWait, done, config->max_fd);
+	}
+	else
+	{
+		std::cerr << "Start..";
+		if (config->max_fd > 0)
+			Daemonize::setFdLimit(config->max_fd);
+		runner();
+		done();
+	}
+	return reslt;
 }

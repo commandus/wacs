@@ -35,6 +35,9 @@ public:
 	std::string path;								///< database files lock.mdb, data.mdb directory path
 	int flags;
 	int mode;
+	bool daemonize;
+	int max_fd;				///< 0- use default max file descriptor count per process
+
 	WacsConfig();
 	WacsConfig
 	(
