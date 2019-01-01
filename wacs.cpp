@@ -82,6 +82,7 @@ int main(int argc, char** argv)
 	switch (config.cmd)
 	{
 		default:
+			break;
 	}
 	return 0;
 }
