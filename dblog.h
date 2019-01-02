@@ -34,6 +34,19 @@ typedef struct dbenv {
 	MDB_cursor *cursor;
 } dbenv;
 
+typedef struct 
+{
+	uint8_t tag;		// 'L'- log entry, 'P'- last_probe
+	uint8_t sa[6];		// MAC address
+	time_t dt;			// time, seconds since Unix epoch 
+} LogKey;
+
+typedef struct 
+{
+	uint16_t device_id;	// 0
+	int16_t ssi_signal;	// dB
+} LogData;
+
 /**
  * @brief Opens LMDB database file
  * @param env created LMDB environment(transaction, cursor)
@@ -69,12 +82,12 @@ size_t getKey
  * @brief Store input log data to the LMDB
  * @param env database env
  * @param buffer buffer
- * @param buffer_size buffer size
+ * @param size buffer size
  * @return 0 - success
  */
 int put_db
 (
 	struct dbenv *env,
 	void *buffer,
-	int buffer_size
+	size_t size
 );

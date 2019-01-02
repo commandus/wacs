@@ -1,6 +1,8 @@
 #include "dblog.h"
 #include "iostream"
 #include "errorcodes.h"
+#include "hostapd-log-entry.h"
+#include <string.h>
 
 #define LOG(verbosity) \
 	std::cerr
@@ -98,15 +100,16 @@ int put_db
 (
 	struct dbenv *env,
 	void *buffer,
-	int buffer_size
+	size_t size
 )
 {
-	MDB_val key, data;
-	char keybuffer[2048];
+	if (size < sizeof(LogEntry))
+		return ERRCODE_NO_MEMORY;
+	LogEntry *entry = (LogEntry *) buffer;
+	// swap bytes if needed
+	ntohLogEntry(entry);
 
-	key.mv_size = getKey(0, keybuffer, sizeof(keybuffer), buffer, buffer_size);
-	if (key.mv_size == 0)
-		return 0;	// No key, no store
+	// start transaction
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
@@ -114,11 +117,33 @@ int put_db
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
-	key.mv_data = keybuffer;
-	data.mv_size = buffer_size;
-	data.mv_data = buffer;
+	// log
+	LogKey key;
+	key.tag = 'L';
+	key.dt = time(NULL);
+	memmove(key.sa, entry->sa, sizeof(key.sa));
+	MDB_val dbkey;
+	dbkey.mv_size = sizeof(LogKey);
+	dbkey.mv_data = &key;
 
-	r = mdb_put(env->txn, env->dbi, &key, &data, 0);
+	LogData data;
+	data.device_id = entry->device_id;
+	data.ssi_signal = entry->ssi_signal;
+	MDB_val dbdata;
+	dbdata.mv_size = sizeof(LogData);
+	dbdata.mv_data = &data;
+
+	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+	{
+		LOG(ERROR) << ERR_LMDB_PUT << r;
+		return ERRCODE_LMDB_PUT;
+	}
+
+	// probe
+	key.tag = 'P';
+	dbdata.mv_size = 0; 
+	dbdata.mv_data = NULL;
+	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	{
 		LOG(ERROR) << ERR_LMDB_PUT << r;
 		return ERRCODE_LMDB_PUT;
