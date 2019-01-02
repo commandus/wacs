@@ -124,6 +124,7 @@ int put_db
 
 	// probe
 	key.tag = 'P';
+	dbkey.mv_size = sizeof(LastProbeKey);
 	dbdata.mv_size = 0; 
 	dbdata.mv_data = NULL;
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);

@@ -36,7 +36,7 @@ typedef struct dbenv {
 
 typedef struct 
 {
-	uint8_t tag;		// 'L'- log entry, 'P'- last_probe
+	uint8_t tag;		// 'L'- log entry
 	uint8_t sa[6];		// MAC address
 	time_t dt;			// time, seconds since Unix epoch 
 } LogKey;
@@ -46,6 +46,12 @@ typedef struct
 	uint16_t device_id;	// 0
 	int16_t ssi_signal;	// dB
 } LogData;
+
+typedef struct 
+{
+	uint8_t tag;		// 'P'- last_probe
+	uint8_t sa[6];		// MAC address
+} LastProbeKey;
 
 /**
  * @brief Opens LMDB database file
