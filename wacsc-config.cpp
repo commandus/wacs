@@ -1,4 +1,4 @@
-#include "wacs-config.h"
+#include "wacsc-config.h"
 #include <iostream>
 #include <argtable3/argtable3.h>
 #include <sys/types.h>
@@ -15,7 +15,7 @@
 
 #include "platform.h"
 
-#define progname "wacs"
+#define progname "wacsc"
 
 #define DEF_QUEUE					"ipc:///tmp/wacs.nanomsg"
 #define DEF_DB_PATH					"."
@@ -54,13 +54,13 @@ static  std::string getDefaultDatabasePath()
 }
 #endif
 
-WacsConfig::WacsConfig()
+WacscConfig::WacscConfig()
 	: errorcode(0), cmd(0), verbosity(0), 
 	path(getDefaultDatabasePath())
 {
 }
 	
-WacsConfig::WacsConfig
+WacscConfig::WacscConfig
 (
 	int argc,
 	char* argv[]
@@ -69,30 +69,38 @@ WacsConfig::WacsConfig
 	errorcode = parseCmd(argc, argv);
 }
 
-WacsConfig::~WacsConfig()
+WacscConfig::~WacscConfig()
 {
 }
 
+static int parseCommand
+(
+	const char *value
+)
+{
+	std::string v(value);
+	if (v == "test")
+		return 1;
+	return -1;
+}
+
 /**
- * Parse command line into WacsConfig class
+ * Parse command line into WacscConfig class
  * Return 0- success
  *        1- show help and exit, or command syntax error
  *        2- output file does not exists or can not open to write
  **/
-int WacsConfig::parseCmd
+int WacscConfig::parseCmd
 (
 	int argc,
 	char* argv[]
 )
 {
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test");
 	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "Default " DEF_QUEUE);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
-
-	// deamon
-	struct arg_lit *a_daemonize = arg_lit0("d", "daemonize", "Start as daemon/service");
-	struct arg_int *a_max_fd = arg_int0(NULL, "maxfd", "<number>", "Set max file descriptors. 0- use default (1024).");
 
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
@@ -100,9 +108,9 @@ int WacsConfig::parseCmd
 	struct arg_end *a_end = arg_end(20);
 
 	void* argtable[] = { 
+		a_cmd,
 		a_message_url,
 		a_db_path, a_flags, a_mode,
-		a_daemonize, a_max_fd, 
 		a_verbosity, a_help, a_end 
 	};
 
@@ -118,6 +126,15 @@ int WacsConfig::parseCmd
 	nerrors = arg_parse(argc, argv, argtable);
 
 	verbosity = a_verbosity->count;
+	if (a_cmd->count)
+	{
+		cmd = parseCommand(*a_cmd->sval);
+	}
+	if (cmd < 0)
+	{
+		std::cerr << "Unknown command: " << a_cmd->sval << std::endl;
+		nerrors++;
+	}
 	if (a_message_url->count)
 		message_url = *a_message_url->sval;
 	else
@@ -140,12 +157,6 @@ int WacsConfig::parseCmd
 	else
 		flags = DEF_FLAGS;
 
-	daemonize = a_daemonize->count > 0;
-	if (a_max_fd > 0)
-		max_fd = *a_max_fd->ival;
-	else
-		max_fd = 0;
-
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)
 	{
@@ -153,7 +164,7 @@ int WacsConfig::parseCmd
 			arg_print_errors(stderr, a_end, progname);
 		std::cerr << "Usage: " << progname << std::endl;
 		arg_print_syntax(stderr, argtable, "\n");
-		std::cerr << "wacs listener" << std::endl;
+		std::cerr << "wacs command line interface client" << std::endl;
 		arg_print_glossary(stderr, argtable, "  %-25s %s\n");
 		arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
 		return 1;
@@ -163,7 +174,7 @@ int WacsConfig::parseCmd
 	return 0;
 }
 
-int WacsConfig::error()
+int WacscConfig::error()
 {
 	return errorcode;
 }

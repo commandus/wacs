@@ -1,10 +1,10 @@
 /**
-  * wacs options
-  * @file wacs-config.h
+  * wacsc options
+  * @file wacsc-config.h
   **/
 
-#ifndef WACS_CONFIG_H
-#define WACS_CONFIG_H	1
+#ifndef WACSC_CONFIG_H
+#define WACSC_CONFIG_H	1
 
 #include <string>
 #include <vector>
@@ -12,7 +12,7 @@
 /**
  * Command line interface (CLI) tool configuration structure
  */
-class WacsConfig
+class WacscConfig
 {
 private:
 	/**
@@ -28,23 +28,20 @@ private:
 	);
 	int errorcode;
 public:
-	int stop_request;
 	std::string message_url;
 	int cmd;										///< CMD_*
 	int verbosity;									///< 0-quiet, 3- debug
 	std::string path;								///< database files lock.mdb, data.mdb directory path
 	int flags;
 	int mode;
-	bool daemonize;
-	int max_fd;				///< 0- use default max file descriptor count per process
 
-	WacsConfig();
-	WacsConfig
+	WacscConfig();
+	WacscConfig
 	(
 		int argc,
 		char* argv[]
 	);
-	~WacsConfig();
+	~WacscConfig();
 	int error();
 };
 

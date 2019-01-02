@@ -1,5 +1,6 @@
 /**
- * @file wacs.cpp
+ * Client (test,..)
+ * @file wacsc.cpp
  */
 #include <string>
 #include <cstring>
@@ -10,35 +11,13 @@
 #include <argtable3/argtable3.h>
 
 #include "platform.h"
-#include "wacs.h"
+#include "wacsc.h"
+#include "send-log-entry.h"
 #include "errorcodes.h"
-#include "daemonize.h"
 
-#define DEAMON_NAME	"wacsd"
-
-static WacsConfig *config = NULL;
-
-void stopNWait()
-{
-	if (config)
-		stop(config);
-}
-
-void done()
-{
-}
+static WacscConfig *config = NULL;
 
 int reslt;
-
-void runner()
-{
-	if (!config)
-	{
-		std::cerr << ERR_NO_CONFIG;
-		return;
-	}
-	reslt = run(config);
-}
 
 #ifdef _MSC_VER
 void setSignalHandler(int signal)
@@ -51,15 +30,14 @@ void signalHandler(int signal)
 	{
 	case SIGINT:
 		std::cerr << MSG_INTERRUPTED;
-		stopNWait();
-		done();
+		if (config)
+			delete config;
+		exit(ERR_OK);
 		break;
 	case SIGHUP:
-		std::cerr << MSG_RELOAD_CONFIG_REQUEST;
-		reload(config);
 		break;
 	default:
-			std::cerr << MSG_SIGNAL << signal;
+		std::cerr << MSG_SIGNAL << signal;
 	}
 }
 
@@ -86,14 +64,16 @@ void initWindows()
 }
 #endif
 
-void onLog
+static int sendTest
 (
-	void *env,
-	int severity,
-	const char *message
+	WacscConfig *config
 )
 {
-	std::cerr << message;
+	LogEntry value;
+	value.device_id = 1;
+	value.ssi_signal = 0xDEAD;
+	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
+	return sendLogEntry(config->message_url, &value);
 }
 
 int main(int argc, char** argv)
@@ -105,27 +85,26 @@ int main(int argc, char** argv)
 #endif
     reslt = 0;
 
-	config = new WacsConfig(argc, argv);
+	config = new WacscConfig(argc, argv);
 	if (!config)
 		exit(ERRCODE_NO_CONFIG);
 
     if (config->error() != 0)
 	{
 		std::cerr << ERR_NO_CONFIG;
+		delete config;
 		exit(config->error());
 	}
+	
+	switch(config->cmd)
+	{
+	case 1:
+		reslt = sendTest(config);
+		break;
+	default:
+		break;
+	}
 
-    if (config->daemonize)
-	{
-		std::cerr << MSG_DAEMONIZE;
-		Daemonize daemonize(DEAMON_NAME, config->path, runner, stopNWait, done, config->max_fd);
-	}
-	else
-	{
-		if (config->max_fd > 0)
-			Daemonize::setFdLimit(config->max_fd);
-		runner();
-		done();
-	}
+	delete config;
 	return reslt;
 }

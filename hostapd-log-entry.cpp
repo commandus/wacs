@@ -61,3 +61,24 @@ std::string mactostr
 {
 	return mactostr(value->sa);
 }
+
+/**
+ * string to MAC address
+ */
+bool strtomacaddress
+(
+	void *retval,
+	const std::string &value
+)
+{
+	unsigned int v[6];
+	int c = std::sscanf(value.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x",
+		&v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+	uint8_t *r = (uint8_t *) retval;
+	r[0] = v[0];
+	r[1] = v[1];
+	r[2] = v[2];
+	r[3] = v[3];
+	r[4] = v[4];
+	r[5] = v[5];
+}

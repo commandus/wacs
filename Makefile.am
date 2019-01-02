@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
 bin_PROGRAMS = \
-	wacs
+	wacs wacsc
 
 commoncppflags = -O2 -I/usr/local/include -Ithird_party
 commoncppflags += -I/usr/local/opt/openssl@1.1/include
@@ -26,7 +26,8 @@ AM_CXXFLAGS = -std=c++11
 nobase_dist_include_HEADERS = \
 	platform.h \
 	wacs-config.h wacs.h \
-	dblog.h hostapd-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
+	wacsc-config.h wacsc.h \
+	dblog.h hostapd-log-entry.h send-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
 	daemonize.h \
 	$(ARGT3HEADERS)
 
@@ -41,9 +42,20 @@ wacs_SOURCES= \
 	dblog.cpp hostapd-log-entry.cpp \
 	daemonize.cpp \
 	$(common_src)
-
 wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacs_CPPFLAGS = $(commoncppflags)
+
+#
+#	wacsc
+#
+wacsc_SOURCES= \
+	wacsc-config.cpp wacsc.cpp \
+	NanoMessage.cpp errorcodes.cpp \
+	send-log-entry.cpp hostapd-log-entry.cpp \
+	$(common_src)
+wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
+wacsc_CPPFLAGS = $(commoncppflags)
+
 
 #
 #	Configs, readme, CMake etc.

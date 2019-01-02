@@ -4,8 +4,7 @@
 #include "hostapd-log-entry.h"
 #include <string.h>
 
-#define LOG(verbosity) \
-	std::cerr
+#include "log.h"
 
 /**
  * @brief Opens LMDB database file

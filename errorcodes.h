@@ -79,6 +79,8 @@
 #define ERRCODE_CONFIG							-59
 
 #define ERRCODE_NO_NOBILE_SUBSCRIBERS			-60
+#define ERRCODE_WSA_ERROR						-61
+
 
 #define ERR_COMMAND								"Invalid command line options or help requested."
 #define ERR_PARSE_COMMAND						"Error parse command line options, possible cause is insufficient memory."
@@ -125,6 +127,7 @@
 #define ERR_INTERRUPTED							"Interruped "
 
 #define ERR_TOO_SMALL							"Insufficient buffer space "
+#define ERR_WSA_ERROR 							"WSAStartup error %d"
 
 std:: string getErrorDescription(int code);
 

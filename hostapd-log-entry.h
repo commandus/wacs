@@ -42,3 +42,12 @@ std::string mactostr
 (
 	LogEntry *value
 );
+
+/**
+ * string to MAC address
+ */
+bool strtomacaddress
+(
+	void *retval,
+	const std::string &value
+);

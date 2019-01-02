@@ -11,17 +11,15 @@
 #include <arpa/inet.h>
 
 #include <nanomsg/nn.h>
-#include <nanomsg/pubsub.h>
+#include <nanomsg/bus.h>
 
 #include "errorcodes.h"
 #include "lmdbwriter.h"
 
 #include "dblog.h"
+#include "log.h"
 
 #define BUF_SIZE	1024
-
-#define LOG(verbosity) \
-	std::cerr
 
 /**
  * @brief Write LMDB loop
@@ -36,20 +34,12 @@ int run
 {
 START:
 	config->stop_request = 0;
-	int accept_socket = nn_socket(AF_SP, NN_SUB);
-	int r = nn_setsockopt(accept_socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
-	if (r < 0)
-	{
-		LOG(ERROR) << ERR_NN_SUBSCRIBE << config->message_url << " " << errno << " " << strerror(errno);
-		return ERRCODE_NN_SUBSCRIBE;
-	}
-
-	int eid = nn_connect(accept_socket, config->message_url.c_str());
-
+	int accept_socket = nn_socket(AF_SP, NN_BUS);
+	int eid = nn_bind(accept_socket, config->message_url.c_str());
 	if (eid < 0)
 	{
-		LOG(ERROR) << ERR_NN_CONNECT << config->message_url;
-		return ERRCODE_NN_CONNECT;
+		LOG(ERROR) << ERR_NN_BIND << config->message_url;
+		return ERRCODE_NN_BIND;
 	}
 
 	struct dbenv env;
@@ -88,7 +78,7 @@ START:
 		nn_freemsg(buffer);
     }
 
-	r = 0;
+	int r = 0;
 
 	if (!close_lmdb(&env))
 	{
