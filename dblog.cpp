@@ -72,23 +72,6 @@ bool close_lmdb
 	return true;
 }
 
-size_t getKey
-(
-	int mode, 
-	void *keybuffer,
-	size_t keysize,
-	void *buffer,
-	size_t size
-)
-{
-	switch (mode) {
-		case 0:
-			return 10;
-		case 1:
-			return 4;
-	}
-}
-
 /**
  * @brief Store input packet to the LMDB
  * @param env database env

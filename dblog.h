@@ -69,15 +69,6 @@ bool close_lmdb
 	struct dbenv *env
 );
 
-size_t getKey
-(
-	int mode, 
-	void *keybuffer,
-	size_t keysize,
-	void *buffer,
-	size_t size
-);
-
 /**
  * @brief Store input log data to the LMDB
  * @param env database env
