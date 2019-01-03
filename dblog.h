@@ -1,9 +1,11 @@
-#include "wacs-config.h"
-
 #ifdef USE_LMDB
 #include "lmdb.h"
 #else
 #include "mdbx.h"
+
+#define MDB_SET_RANGE MDBX_SET_RANGE
+#define MDB_NEXT MDBX_NEXT
+#define MDB_SUCCESS MDBX_SUCCESS
 #define MDB_env	MDBX_env
 #define MDB_dbi	MDBX_dbi
 #define MDB_txn	MDBX_txn
@@ -18,6 +20,7 @@
 #define mdb_open mdbx_dbi_open
 #define mdb_close mdbx_dbi_close
 #define mdb_put mdbx_put
+#define mdb_cursor_get mdbx_cursor_get
 
 #define mv_size iov_len
 #define mv_data iov_base
@@ -59,10 +62,12 @@ typedef struct
  * @param config pass path, flags, file open mode
  * @return true- success
  */
-bool open_lmdb
+bool openDb
 (
 	struct dbenv *env,
-	WacsConfig *config
+	const char *path,
+	int flags,
+	int mode
 );
 
 /**
@@ -70,7 +75,7 @@ bool open_lmdb
  * @param config pass path, flags, file open mode
  * @return true- success
  */
-bool close_lmdb
+bool closeDb
 (
 	struct dbenv *env
 );
@@ -82,9 +87,41 @@ bool close_lmdb
  * @param size buffer size
  * @return 0 - success
  */
-int put_db
+int putLog
 (
 	struct dbenv *env,
 	void *buffer,
 	size_t size
+);
+
+// callback, return true - stop request, false- continue
+typedef bool (*OnLog)
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+);
+
+// callback, return true - stop request, false- continue
+typedef bool (*OnLastProbe)
+(
+	void *env,
+	LastProbeKey *key
+);
+
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param start 0- no limit
+ * @param finish 0- no limit
+ * @param onLog callback
+ */
+int readLog
+(
+	struct dbenv *env,
+	uint8_t *sa,			// MAC address
+	time_t start,			// time, seconds since Unix epoch 
+	time_t finish,
+	OnLog onLog
 );

@@ -13,6 +13,7 @@
 #include "platform.h"
 #include "wacsc.h"
 #include "send-log-entry.h"
+#include "dblog.h"
 #include "errorcodes.h"
 
 static WacscConfig *config = NULL;
@@ -76,6 +77,58 @@ static int sendTest
 	return sendLogEntry(config->message_url, &value);
 }
 
+static bool onLog
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	return false;
+}
+
+static int lsLog
+(
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	int r = 0;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	uint8_t saa[6];
+	strtomacaddress(&saa, "de:ad:be:ef:be:ef");
+	uint8_t *sa = NULL;
+	time_t start;			// time, seconds since Unix epoch 
+	time_t finish;
+
+	r = readLog(&env, sa, start, finish, onLog);
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path;
+		r = ERRCODE_LMDB_CLOSE;
+	}
+
+	return r;
+}
+
+static int lsLastProbe
+(
+	WacscConfig *config
+)
+{
+	LogEntry value;
+	value.device_id = 1;
+	value.ssi_signal = 0xDEAD;
+	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
+	return sendLogEntry(config->message_url, &value);
+}
+
 int main(int argc, char** argv)
 {
 	// Signal handler
@@ -98,8 +151,14 @@ int main(int argc, char** argv)
 	
 	switch(config->cmd)
 	{
-	case 1:
+	case CMD_SEND_TEST:
 		reslt = sendTest(config);
+		break;
+	case CMD_LS_LOG:
+		reslt = lsLog(config);
+		break;
+	case CMD_LS_LAST_PROBE:
+		reslt = lsLastProbe(config);
 		break;
 	default:
 		break;

@@ -44,12 +44,11 @@ START:
 
 	struct dbenv env;
 
-	if (!open_lmdb(&env, config))
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
 	{
 		LOG(ERROR) << ERR_LMDB_OPEN << config->path;
 		return ERRCODE_LMDB_OPEN;
 	}
-
 
 	void *buffer = malloc(BUF_SIZE);
 	if (!buffer)
@@ -74,13 +73,13 @@ START:
 				LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno);
     		continue;
     	}
-		put_db(&env, buffer, bytes);
+		putLog(&env, buffer, bytes);
 		nn_freemsg(buffer);
     }
 
 	int r = 0;
 
-	if (!close_lmdb(&env))
+	if (!closeDb(&env))
 	{
 		LOG(ERROR) << ERR_LMDB_CLOSE << config->path;
 		r = ERRCODE_LMDB_CLOSE;

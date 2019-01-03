@@ -9,7 +9,7 @@
   */
 int run
 (
-		WacsConfig *config
+	WacsConfig *config
 );
 
 /**
@@ -18,7 +18,9 @@ int run
   */
 int stop
 (
-		WacsConfig *config
+	WacsConfig *config
 );
 
-int reload(WacsConfig *config);
+int reload(
+	WacsConfig *config
+);

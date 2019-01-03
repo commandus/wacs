@@ -51,7 +51,7 @@ wacs_CPPFLAGS = $(commoncppflags)
 wacsc_SOURCES= \
 	wacsc-config.cpp wacsc.cpp \
 	NanoMessage.cpp errorcodes.cpp \
-	send-log-entry.cpp hostapd-log-entry.cpp \
+	dblog.cpp send-log-entry.cpp hostapd-log-entry.cpp \
 	$(common_src)
 wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacsc_CPPFLAGS = $(commoncppflags)

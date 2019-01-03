@@ -12,10 +12,13 @@
  * @param config pass path, flags, file open mode
  * @return true- success
  */
-bool open_lmdb
+bool openDb
 (
 	struct dbenv *env,
-	WacsConfig *config
+	const char *path,
+	int flags,
+	int mode
+
 )
 {
 	int rc = mdb_env_create(&env->env);
@@ -26,10 +29,10 @@ bool open_lmdb
 		return false;
 	}
 
-	rc = mdb_env_open(env->env, config->path.c_str(), config->flags, config->mode);
+	rc = mdb_env_open(env->env, path, flags, mode);
 	if (rc)
 	{
-		LOG(ERROR) << "mdb_env_open path: " << config->path.c_str() << " error " << rc << " " << mdb_strerror(rc);
+		LOG(ERROR) << "mdb_env_open path: " << path << " error " << rc << " " << mdb_strerror(rc);
 		env->env = NULL;
 		return false;
 	}
@@ -61,7 +64,7 @@ bool open_lmdb
  * @param config pass path, flags, file open mode
  * @return true- success
  */
-bool close_lmdb
+bool closeDb
 (
 	struct dbenv *env
 )
@@ -78,7 +81,7 @@ bool close_lmdb
  * @param buffer_size buffer size
  * @return 0 - success
  */
-int put_db
+int putLog
 (
 	struct dbenv *env,
 	void *buffer,
@@ -141,3 +144,63 @@ int put_db
 	return r;
 }
 
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param start 0- no limit
+ * @param finish 0- no limit
+ * @param onLog callback
+ */
+int readLog
+(
+	struct dbenv *env,
+	uint8_t *sa,			// MAC address
+	time_t start,			// time, seconds since Unix epoch 
+	time_t finish,
+	OnLog onLog
+)
+{
+	if (!onLog)
+	{
+		LOG(ERROR) << ERR_WRONG_PARAM << "onLog";
+		return ERRCODE_WRONG_PARAM;
+	}
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LogKey key;
+	LogData data;
+	key.tag = 'L';
+	key.dt = time(NULL);
+	memmove(key.sa, sa, sizeof(key.sa));
+	MDB_val dbkey;
+	MDB_val dbval;
+	dbkey.mv_size = sizeof(LogKey);
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
+	if (r != MDB_SUCCESS) 
+	{
+		return r;
+	}
+	do {
+		if (onLog(NULL, &key, &data))
+			break;
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
+	
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}

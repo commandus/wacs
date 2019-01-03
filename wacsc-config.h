@@ -9,6 +9,11 @@
 #include <string>
 #include <vector>
 
+#define	CMD_NONE			-1
+#define	CMD_SEND_TEST		1
+#define	CMD_LS_LOG			2
+#define	CMD_LS_LAST_PROBE	3
+
 /**
  * Command line interface (CLI) tool configuration structure
  */

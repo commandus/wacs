@@ -80,6 +80,7 @@
 
 #define ERRCODE_NO_NOBILE_SUBSCRIBERS			-60
 #define ERRCODE_WSA_ERROR						-61
+#define ERRCODE_WRONG_PARAM						-62
 
 
 #define ERR_COMMAND								"Invalid command line options or help requested."
@@ -128,6 +129,7 @@
 
 #define ERR_TOO_SMALL							"Insufficient buffer space "
 #define ERR_WSA_ERROR 							"WSAStartup error %d"
+#define ERR_WRONG_PARAM							"Wrong parameter "
 
 std:: string getErrorDescription(int code);
 

@@ -80,8 +80,12 @@ static int parseCommand
 {
 	std::string v(value);
 	if (v == "test")
-		return 1;
-	return -1;
+		return CMD_SEND_TEST;
+	if (v == "log")
+		return CMD_LS_LOG;
+	if (v == "probe")
+		return CMD_LS_LAST_PROBE;
+	return CMD_NONE;
 }
 
 /**
@@ -96,7 +100,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe");
 	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "Default " DEF_QUEUE);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
