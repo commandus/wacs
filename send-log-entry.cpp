@@ -13,7 +13,8 @@
 int sendLogEntry
 (
 	const std::string &message_url,
-	const LogEntry* value
+	const LogEntry* value,
+	int verbosity
 )
 {
 	int write_socket = nn_socket(AF_SP, NN_BUS);
@@ -26,9 +27,21 @@ int sendLogEntry
 
 	if (eid < 0)
 	{
-		LOG(ERROR) << ERR_NN_BIND << message_url;
-		return ERRCODE_NN_BIND;
+		LOG(ERROR) << ERR_NN_CONNECT << message_url;
+		return ERRCODE_NN_CONNECT;
 	}
+
+	int bytes = nn_send(write_socket, value, sizeof(LogEntry), 0);
+	if (bytes < 0)
+	{
+    	LOG(ERROR) << ERR_NN_SEND << " out " << errno << ": " << nn_strerror(errno);
+	}
+	else
+	{
+		if (verbosity > 2)
+			LOG(INFO) << MSG_NN_SENT_SUCCESS << message_url << " " << bytes << " bytes" << std::endl;
+	}
+	// flush?
 
     int r = nn_shutdown(write_socket, eid);
     if (r)

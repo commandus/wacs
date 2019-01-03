@@ -4,5 +4,6 @@
 int sendLogEntry
 (
 	const std::string &message_url,
-	const LogEntry* value
+	const LogEntry* value,
+	int verbosity
 );

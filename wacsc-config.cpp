@@ -14,6 +14,7 @@
 #endif
 
 #include "platform.h"
+#include "utilstring.h"
 
 #define progname "wacsc"
 
@@ -101,6 +102,16 @@ int WacscConfig::parseCmd
 )
 {
 	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe");
+	
+	// filter
+	// MAC address
+	struct arg_str *a_mac = arg_str0("a", "sa", "<MAC>", "MAC address");
+	struct arg_str *a_start = arg_str0(NULL, "start", "<local time>", "e.g. 2017-01-01T00:00:00 or 1483196400 (Unix seconds)");
+	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2017-01-31T23:59:59 or 1485874799");
+
+	struct arg_int *a_device_id = arg_int0("d", "deviceid", "<number>", "Devide identifier");
+	struct arg_int *a_ssi_signal = arg_int0("b", "ssisignal", "<number>", "SSI signal");
+
 	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "Default " DEF_QUEUE);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
@@ -113,8 +124,9 @@ int WacscConfig::parseCmd
 
 	void* argtable[] = { 
 		a_cmd,
-		a_message_url,
-		a_db_path, a_flags, a_mode,
+		a_mac, a_start, a_finish,
+		a_device_id, a_ssi_signal,
+		a_message_url, a_db_path, a_flags, a_mode,
 		a_verbosity, a_help, a_end 
 	};
 
@@ -130,6 +142,7 @@ int WacscConfig::parseCmd
 	nerrors = arg_parse(argc, argv, argtable);
 
 	verbosity = a_verbosity->count;
+
 	if (a_cmd->count)
 	{
 		cmd = parseCommand(*a_cmd->sval);
@@ -139,6 +152,28 @@ int WacscConfig::parseCmd
 		std::cerr << "Unknown command: " << a_cmd->sval << std::endl;
 		nerrors++;
 	}
+
+	if (a_mac->count)
+		mac = std::string(*a_mac->sval);
+	else
+		mac = "";
+
+	if (a_start->count)
+		start = parseDate(*a_start->sval);
+	else
+		start = 0;
+	if (a_finish->count)
+		finish = parseDate(*a_finish->sval);
+	else
+		finish = 0;
+	if (a_device_id->count)
+		device_id = *a_device_id->ival;
+	else
+		device_id = 0;
+	if (a_ssi_signal->count)
+		ssi_signal = *a_ssi_signal->ival;
+	else
+		ssi_signal = 0;
 	if (a_message_url->count)
 		message_url = *a_message_url->sval;
 	else

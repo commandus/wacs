@@ -35,6 +35,13 @@ private:
 public:
 	std::string message_url;
 	int cmd;										///< CMD_*
+
+	std::string mac;								///< MAC address
+	time_t start;
+	time_t finish;
+	uint16_t device_id;
+	int16_t ssi_signal;
+
 	int verbosity;									///< 0-quiet, 3- debug
 	std::string path;								///< database files lock.mdb, data.mdb directory path
 	int flags;

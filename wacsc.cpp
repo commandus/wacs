@@ -71,10 +71,10 @@ static int sendTest
 )
 {
 	LogEntry value;
-	value.device_id = 1;
-	value.ssi_signal = 0xDEAD;
-	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
-	return sendLogEntry(config->message_url, &value);
+	value.device_id = config->device_id;
+	value.ssi_signal = config->ssi_signal;
+	strtomacaddress(&value.sa, config->mac);
+	return sendLogEntry(config->message_url, &value, config->verbosity);
 }
 
 static bool onLog
@@ -100,13 +100,9 @@ static int lsLog
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	uint8_t saa[6];
-	strtomacaddress(&saa, "de:ad:be:ef:be:ef");
-	uint8_t *sa = NULL;
-	time_t start;			// time, seconds since Unix epoch 
-	time_t finish;
-
-	r = readLog(&env, sa, start, finish, onLog);
+	uint8_t sa[6];
+	strtomacaddress(&sa, config->mac);
+	r = readLog(&env, config->mac.empty() ? NULL : sa, config->start, config->finish, onLog);
 
 	if (!closeDb(&env))
 	{
@@ -126,7 +122,7 @@ static int lsLastProbe
 	value.device_id = 1;
 	value.ssi_signal = 0xDEAD;
 	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
-	return sendLogEntry(config->message_url, &value);
+	return sendLogEntry(config->message_url, &value, config->verbosity);
 }
 
 int main(int argc, char** argv)

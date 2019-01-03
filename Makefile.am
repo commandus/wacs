@@ -26,7 +26,7 @@ AM_CXXFLAGS = -std=c++11
 nobase_dist_include_HEADERS = \
 	platform.h \
 	wacs-config.h wacs.h \
-	wacsc-config.h wacsc.h \
+	wacsc-config.h wacsc.h utilstring.h \
 	dblog.h hostapd-log-entry.h send-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
 	daemonize.h \
 	$(ARGT3HEADERS)
@@ -52,6 +52,7 @@ wacsc_SOURCES= \
 	wacsc-config.cpp wacsc.cpp \
 	NanoMessage.cpp errorcodes.cpp \
 	dblog.cpp send-log-entry.cpp hostapd-log-entry.cpp \
+	utilstring.cpp \
 	$(common_src)
 wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacsc_CPPFLAGS = $(commoncppflags)

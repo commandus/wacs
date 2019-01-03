@@ -177,8 +177,11 @@ int readLog
 	LogKey key;
 	key.tag = 'L';
 	key.dt = start;
-	memmove(key.sa, sa, sizeof(key.sa));
-	
+	if (sa)
+		memmove(key.sa, sa, sizeof(key.sa));
+	else
+		memset(key.sa, 0, sizeof(key.sa));
+
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
 	dbkey.mv_data = &key;

@@ -118,6 +118,7 @@ int WacsConfig::parseCmd
 	nerrors = arg_parse(argc, argv, argtable);
 
 	verbosity = a_verbosity->count;
+
 	if (a_message_url->count)
 		message_url = *a_message_url->sval;
 	else

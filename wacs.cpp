@@ -50,16 +50,16 @@ void signalHandler(int signal)
 	switch(signal)
 	{
 	case SIGINT:
-		std::cerr << MSG_INTERRUPTED;
+		std::cerr << MSG_INTERRUPTED << std::endl;
 		stopNWait();
 		done();
 		break;
 	case SIGHUP:
-		std::cerr << MSG_RELOAD_CONFIG_REQUEST;
+		std::cerr << MSG_RELOAD_CONFIG_REQUEST << std::endl;
 		reload(config);
 		break;
 	default:
-			std::cerr << MSG_SIGNAL << signal;
+			std::cerr << MSG_SIGNAL << signal << std::endl;
 	}
 }
 

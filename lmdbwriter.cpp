@@ -70,9 +70,11 @@ START:
 				break;
 			}
 			else
-				LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno);
+				LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno) << std::endl;
     		continue;
     	}
+    	if (config->verbosity > 2)
+			LOG(INFO) << MSG_RECEIVED << bytes << std::endl;
 		putLog(&env, buffer, bytes);
 		nn_freemsg(buffer);
     }
