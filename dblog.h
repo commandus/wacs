@@ -5,7 +5,9 @@
 
 #define MDB_SET_RANGE MDBX_SET_RANGE
 #define MDB_NEXT MDBX_NEXT
+#define MDB_PREV MDBX_PREV
 #define MDB_SUCCESS MDBX_SUCCESS
+#define MDB_cursor_op MDBX_cursor_op
 #define MDB_env	MDBX_env
 #define MDB_dbi	MDBX_dbi
 #define MDB_txn	MDBX_txn
@@ -16,6 +18,7 @@
 #define mdb_env_close mdbx_env_close
 #define mdb_txn_begin mdbx_txn_begin
 #define mdb_txn_commit mdbx_txn_commit
+#define mdb_txn_rollback mdbx_txn_rollback
 #define mdb_strerror mdbx_strerror
 #define mdb_open mdbx_dbi_open
 #define mdb_close mdbx_dbi_close

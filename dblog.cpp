@@ -175,26 +175,58 @@ int readLog
 	}
 
 	LogKey key;
-	LogData data;
 	key.tag = 'L';
-	key.dt = time(NULL);
+	key.dt = start;
 	memmove(key.sa, sa, sizeof(key.sa));
+	
 	MDB_val dbkey;
-	MDB_val dbval;
 	dbkey.mv_size = sizeof(LogKey);
 	dbkey.mv_data = &key;
 
 	// Get the last key
 	MDB_cursor *cursor;
+	MDB_val dbval;
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
+		mdb_txn_commit(env->txn);
 		return r;
 	}
-	do {
-		if (onLog(NULL, &key, &data))
-			break;
-	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
+
+	MDB_cursor_op dir;
+	if (finish > start)
+		dir = MDB_NEXT;
+	else
+		dir = MDB_PREV;
+
+	{
+		do {
+			if ((dbval.mv_size < sizeof(LogData)) || (dbkey.mv_size < sizeof(LogKey)))
+				continue;
+			LogKey key1;
+			memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, sizeof(key1.sa));
+			key1.dt = ((LogKey*) dbkey.mv_data)->dt;
+			if (finish > start) 
+			{
+				if (key1.dt > finish)
+					break;
+				if (key1.dt < start)
+					continue;
+			}
+			else
+			{
+				if (key1.dt < finish)
+					break;
+				if (key1.dt > start)
+					continue;
+			}
+			LogData data;
+			data.device_id = ((LogData *) dbval.mv_data)->device_id;
+			data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
+			if (onLog(NULL, &key1, &data))
+				break;
+		} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+	}
 	
 	r = mdb_txn_commit(env->txn);
 	if (r)
