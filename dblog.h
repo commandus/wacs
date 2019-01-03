@@ -18,7 +18,7 @@
 #define mdb_env_close mdbx_env_close
 #define mdb_txn_begin mdbx_txn_begin
 #define mdb_txn_commit mdbx_txn_commit
-#define mdb_txn_rollback mdbx_txn_rollback
+#define mdb_txn_abort mdbx_txn_abort
 #define mdb_strerror mdbx_strerror
 #define mdb_open mdbx_dbi_open
 #define mdb_close mdbx_dbi_close
@@ -94,7 +94,8 @@ int putLog
 (
 	struct dbenv *env,
 	void *buffer,
-	size_t size
+	size_t size,
+	int verbosity
 );
 
 // callback, return true - stop request, false- continue

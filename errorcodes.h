@@ -34,6 +34,7 @@
 #define MSG_CHILD_TERMINATED					"Child process terminated "
 #define MSG_EMPTY_PACKET						"Empty packet received"
 #define MSG_SHUTDOWN							"Shutdown "
+#define MSG_BIND_SUCCESSFULLY					"Socket binded successfully to "
 
 #define ERR_OK									0
 #define ERRCODE_COMMAND							-1

@@ -85,7 +85,8 @@ int putLog
 (
 	struct dbenv *env,
 	void *buffer,
-	size_t size
+	size_t size,
+	int verbosity
 )
 {
 	if (size < sizeof(LogEntry))
@@ -106,7 +107,7 @@ int putLog
 	LogKey key;
 	key.tag = 'L';
 	key.dt = time(NULL);
-	memmove(key.sa, entry->sa, sizeof(key.sa));
+	memmove(key.sa, entry->sa, 6);
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
 	dbkey.mv_data = &key;
@@ -117,9 +118,18 @@ int putLog
 	MDB_val dbdata;
 	dbdata.mv_size = sizeof(LogData);
 	dbdata.mv_data = &data;
+	
+	if (verbosity > 2)
+		LOG(INFO) << MSG_RECEIVED << size 
+			<< ", MAC: " << mactostr(key.sa)
+			<< ", device_id: " << entry->device_id
+			<< ", ssi_signal: " << entry->ssi_signal
+			<< std::endl;
 
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+	if (r)
 	{
+		mdb_txn_abort(env->txn);
 		LOG(ERROR) << ERR_LMDB_PUT << r;
 		return ERRCODE_LMDB_PUT;
 	}
@@ -130,7 +140,9 @@ int putLog
 	dbdata.mv_size = 0; 
 	dbdata.mv_data = NULL;
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+	if (r)
 	{
+		mdb_txn_abort(env->txn);
 		LOG(ERROR) << ERR_LMDB_PUT << r;
 		return ERRCODE_LMDB_PUT;
 	}
@@ -178,9 +190,9 @@ int readLog
 	key.tag = 'L';
 	key.dt = start;
 	if (sa)
-		memmove(key.sa, sa, sizeof(key.sa));
+		memmove(key.sa, sa, 6);
 	else
-		memset(key.sa, 0, sizeof(key.sa));
+		memset(key.sa, 0, 6);
 
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
@@ -207,7 +219,7 @@ int readLog
 			if ((dbval.mv_size < sizeof(LogData)) || (dbkey.mv_size < sizeof(LogKey)))
 				continue;
 			LogKey key1;
-			memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, sizeof(key1.sa));
+			memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, 6);
 			key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 			if (finish > start) 
 			{
