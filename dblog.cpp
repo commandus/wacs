@@ -106,7 +106,11 @@ int putLog
 	// log
 	LogKey key;
 	key.tag = 'L';
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+	key.dt = htobe32(time(NULL));
+#else
 	key.dt = time(NULL);
+#endif	
 	memmove(key.sa, entry->sa, 6);
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
@@ -188,7 +192,12 @@ int readLog
 
 	LogKey key;
 	key.tag = 'L';
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+	key.dt = be32toh(start);
+#else
 	key.dt = start;
+#endif	
+
 	if (sa)
 		memmove(key.sa, sa, 6);
 	else
@@ -227,10 +236,14 @@ int readLog
 			continue;
 		LogKey key1;
 		memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, 6);
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+		key1.dt = be32toh(((LogKey*) dbkey.mv_data)->dt);
+#else
 		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
+#endif	
 		if (!memcpy(key1.sa, sa, 6))
 			break;
-		/*
+
 		if (finish > start) 
 		{
 			if (key1.dt > finish)
@@ -245,7 +258,7 @@ int readLog
 			if (key1.dt > start)
 				continue;
 		}
-		*/
+
 		LogData data;
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;

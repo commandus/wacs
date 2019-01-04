@@ -105,7 +105,7 @@ int WacscConfig::parseCmd
 	// MAC address
 	struct arg_str *a_mac = arg_str0("a", "sa", "<MAC>", "MAC address");
 	struct arg_str *a_start = arg_str0(NULL, "start", "<local time>", "e.g. 2019-01-01T00:00:00 or 1546300800 (GMT Unix seconds)");
-	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2019-12-31T23:59:59 or 1577836799");
+	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2019-12-31T23:59:59 or 1577836799. Default now.");
 
 	struct arg_int *a_device_id = arg_int0("d", "deviceid", "<number>", "Devide identifier");
 	struct arg_int *a_ssi_signal = arg_int0("b", "ssisignal", "<number>", "SSI signal");
@@ -175,7 +175,7 @@ int WacscConfig::parseCmd
 	if (a_finish->count)
 		finish = parseDate(*a_finish->sval);
 	else
-		finish = 0;
+		finish = time(NULL);
 	if (a_device_id->count)
 		device_id = *a_device_id->ival;
 	else
