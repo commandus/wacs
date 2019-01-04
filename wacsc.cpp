@@ -11,6 +11,7 @@
 #include <argtable3/argtable3.h>
 
 #include "platform.h"
+#include "utilstring.h"
 #include "wacsc.h"
 #include "send-log-entry.h"
 #include "dblog.h"
@@ -19,6 +20,8 @@
 static WacscConfig *config = NULL;
 
 int reslt;
+
+bool interruptFlag = false;
 
 #ifdef _MSC_VER
 void setSignalHandler(int signal)
@@ -30,10 +33,17 @@ void signalHandler(int signal)
 	switch(signal)
 	{
 	case SIGINT:
-		std::cerr << MSG_INTERRUPTED;
-		if (config)
-			delete config;
-		exit(ERR_OK);
+		if (interruptFlag)
+		{
+			if (config)
+				delete config;
+			exit(ERR_OK);
+		}
+		else
+		{
+			std::cerr << MSG_INTERRUPTED;
+			interruptFlag = true;
+		}
 		break;
 	case SIGHUP:
 		break;
@@ -84,7 +94,13 @@ static bool onLog
 	LogData *data
 )
 {
-	return false;
+	std::cout
+		<< mactostr(key->sa)
+		<< "\t" << time_t2string(key->dt)
+		<< "\t" << data->device_id
+		<< "\t" << data->ssi_signal
+		<< std::endl;
+	return interruptFlag;
 }
 
 static int lsLog
@@ -96,7 +112,7 @@ static int lsLog
 	int r = 0;
 	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
 	{
-		std::cerr << ERR_LMDB_OPEN << config->path;
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
 	}
 
@@ -106,7 +122,7 @@ static int lsLog
 
 	if (!closeDb(&env))
 	{
-		std::cerr << ERR_LMDB_CLOSE << config->path;
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
 		r = ERRCODE_LMDB_CLOSE;
 	}
 

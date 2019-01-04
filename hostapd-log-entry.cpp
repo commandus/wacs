@@ -40,14 +40,14 @@ std::string mactostr
 )
 {
 	std::stringstream ss;
-	char *p = (char *) value;
-	ss << std::hex << std::setw(2) << std::setfill('0') 
-		<< (int) p[0] << ":"
-		<< (int) p[1] << ":"
-		<< (int) p[2] << ":"
-		<< (int) p[3] << ":"
-		<< (int) p[4] << ":"
-		<< (int) p[5];
+	uint8_t *p = (uint8_t *) value;
+	ss << std::setfill('0') << std::hex 
+		<< std::setw(2) << (int) p[0] << ":"
+		<< std::setw(2) << (int) p[1] << ":"
+		<< std::setw(2) << (int) p[2] << ":"
+		<< std::setw(2) << (int) p[3] << ":"
+		<< std::setw(2) << (int) p[4] << ":"
+		<< std::setw(2) << (int) p[5];
 	return ss.str();
 }
 

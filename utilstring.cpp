@@ -9,6 +9,11 @@
 
 #include "platform.h"
 
+#ifndef _MSC_VER
+#define TMSIZE sizeof(struct tm)
+#define localtime_s(tm, time) memmove(tm, localtime(time), TMSIZE)
+#endif
+
 const static char *dateformat = "%FT%T";
 
 /**
@@ -33,4 +38,16 @@ int getCurrentTimeOffset()
 		struct tm lt = {0};
 		localtime_r(&t, &lt);
 		return lt.tm_gmtoff;
+}
+
+std::string time_t2string
+(
+	time_t value
+)
+{
+	struct tm tm;
+	localtime_s(&tm, &value);
+	char dt[32];
+	strftime(dt, sizeof(dt), "%FT%T%Z", &tm);
+	return std::string(dt);
 }
