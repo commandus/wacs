@@ -171,7 +171,7 @@ int putLog
 int readLog
 (
 	struct dbenv *env,
-	uint8_t *sa,			// MAC address
+	const uint8_t *sa,			// MAC address
 	time_t start,			// time, seconds since Unix epoch 
 	time_t finish,
 	OnLog onLog
@@ -241,7 +241,7 @@ int readLog
 #else
 		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 #endif	
-		if (!memcpy(key1.sa, sa, 6))
+		if (memcmp(key1.sa, sa, 6) != 0)
 			break;
 
 		if (finish > start) 

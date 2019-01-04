@@ -125,7 +125,7 @@ typedef bool (*OnLastProbe)
 int readLog
 (
 	struct dbenv *env,
-	uint8_t *sa,			// MAC address
+	const uint8_t *sa,			// MAC address
 	time_t start,			// time, seconds since Unix epoch 
 	time_t finish,
 	OnLog onLog
