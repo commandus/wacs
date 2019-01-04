@@ -1,6 +1,11 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H	1
 
+// #define DEF_QUEUE					"ipc:///tmp/wacs.nanomsg"
+// Protocols: tcp, ws, ipc
+// ipc has problems with flush
+#define DEF_QUEUE					"tcp://127.0.0.1:55555"
+
 #ifdef _WIN32
 
 #include "windows.h"

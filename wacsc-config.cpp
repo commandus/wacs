@@ -15,10 +15,8 @@
 
 #include "platform.h"
 #include "utilstring.h"
-
 #define progname "wacsc"
 
-#define DEF_QUEUE					"ipc:///tmp/wacs.nanomsg"
 #define DEF_DB_PATH					"."
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
@@ -102,17 +100,17 @@ int WacscConfig::parseCmd
 )
 {
 	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe");
-	
+	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
 	struct arg_str *a_mac = arg_str0("a", "sa", "<MAC>", "MAC address");
-	struct arg_str *a_start = arg_str0(NULL, "start", "<local time>", "e.g. 2017-01-01T00:00:00 or 1483196400 (Unix seconds)");
-	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2017-01-31T23:59:59 or 1485874799");
+	struct arg_str *a_start = arg_str0(NULL, "start", "<local time>", "e.g. 2019-01-01T00:00:00 or 1546300800 (GMT Unix seconds)");
+	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2019-12-31T23:59:59 or 1577836799");
 
 	struct arg_int *a_device_id = arg_int0("d", "deviceid", "<number>", "Devide identifier");
 	struct arg_int *a_ssi_signal = arg_int0("b", "ssisignal", "<number>", "SSI signal");
 
-	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "Default " DEF_QUEUE);
+	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g.tcp://127.0.0.1:2019, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
@@ -123,7 +121,7 @@ int WacscConfig::parseCmd
 	struct arg_end *a_end = arg_end(20);
 
 	void* argtable[] = { 
-		a_cmd,
+		a_cmd, a_repeats,
 		a_mac, a_start, a_finish,
 		a_device_id, a_ssi_signal,
 		a_message_url, a_db_path, a_flags, a_mode,
@@ -143,6 +141,18 @@ int WacscConfig::parseCmd
 
 	verbosity = a_verbosity->count;
 
+	if (a_repeats->count)
+	{
+		repeats = *a_repeats->ival;
+		if (repeats <= 0) 
+		{
+			nerrors++;
+			std::cerr << "Repeat count must be 1 or greater." << std::endl;
+		}
+	}
+	else
+		repeats = 1;
+	
 	if (a_cmd->count)
 	{
 		cmd = parseCommand(*a_cmd->sval);

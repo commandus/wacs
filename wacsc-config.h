@@ -35,7 +35,7 @@ private:
 public:
 	std::string message_url;
 	int cmd;										///< CMD_*
-
+	int repeats;
 	std::string mac;								///< MAC address
 	time_t start;
 	time_t finish;

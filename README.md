@@ -8,16 +8,16 @@
             +---------------+
 			        |
 			+---------------+
-			|    log call   |
+			|    IPC call   |
+			+---------------+
+					|
+			+---------------+
+			| wacs listener |
 			+---------------+
 	         |             | 
 	+---------------+  +---------------+
-	| LMDB database |  |   IPC socket  |
+	| LMDB database |  |       ?       |
 	+---------------+  +---------------+
-	                           |
-						+---------------+
-						|  http/2 push? |
-						+---------------+
 ```
 
 ## Dependencies
@@ -47,6 +47,10 @@ git clone git@github.com:nanomsg/nanomsg.git
 
 
 ```
-./wacsc test -vvv -d 1 -b "-54" -a "11:22:33:44:55:66"
-./wacsc test -vvv -d 1 -b "-54" -a "10:10:10:10:10:10"
+./wacs -vvv 
+./wacsc test -vvv -d 1 -b "-54" -a "11:22:33:44:55:66" -n 10
+```
+
+```
+./wacsc log -vvv -d 1 -a "11:22:33:44:55:66"
 ```

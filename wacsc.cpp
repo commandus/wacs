@@ -74,7 +74,7 @@ static int sendTest
 	value.device_id = config->device_id;
 	value.ssi_signal = config->ssi_signal;
 	strtomacaddress(&value.sa, config->mac);
-	return sendLogEntry(config->message_url, &value, config->verbosity);
+	return sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
 }
 
 static bool onLog
@@ -122,7 +122,7 @@ static int lsLastProbe
 	value.device_id = 1;
 	value.ssi_signal = 0xDEAD;
 	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
-	return sendLogEntry(config->message_url, &value, config->verbosity);
+	return 0;
 }
 
 int main(int argc, char** argv)
@@ -132,19 +132,19 @@ int main(int argc, char** argv)
 #ifdef _MSC_VER
 	initWindows();
 #endif
-    reslt = 0;
+	reslt = 0;
 
 	config = new WacscConfig(argc, argv);
 	if (!config)
 		exit(ERRCODE_NO_CONFIG);
 
-    if (config->error() != 0)
+	if (config->error() != 0)
 	{
 		std::cerr << ERR_NO_CONFIG;
 		delete config;
 		exit(config->error());
 	}
-	
+
 	switch(config->cmd)
 	{
 	case CMD_SEND_TEST:

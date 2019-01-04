@@ -23,6 +23,7 @@
 #define mdb_open mdbx_dbi_open
 #define mdb_close mdbx_dbi_close
 #define mdb_put mdbx_put
+#define mdb_cursor_open mdbx_cursor_open
 #define mdb_cursor_get mdbx_cursor_get
 
 #define mv_size iov_len

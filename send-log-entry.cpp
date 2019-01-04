@@ -16,6 +16,7 @@ int sendLogEntry
 (
 	const std::string &message_url,
 	const LogEntry* value,
+	int repeats,
 	int verbosity
 )
 {
@@ -30,11 +31,14 @@ int sendLogEntry
 	int eid = nn_connect(write_socket, message_url.c_str());
 	if (eid < 0)
 	{
-		LOG(ERROR) << ERR_NN_CONNECT << message_url << " " << errno << " " << nn_strerror(errno);
+		LOG(ERROR) << ERR_NN_CONNECT << message_url << " " << errno << " " << nn_strerror(errno) << std::endl;
 		return ERRCODE_NN_CONNECT;
 	}
 	// wait connection established
-	sleep(1);
+	struct nn_pollfd pollfd;
+	pollfd.fd = write_socket;
+	pollfd.events = NN_POLLIN;
+	nn_poll(&pollfd, 1, 100);
 
 	if (eid < 0)
 	{
@@ -42,26 +46,25 @@ int sendLogEntry
 		return ERRCODE_NN_CONNECT;
 	}
 
-	int bytes = nn_send(write_socket, &v, sizeof(LogEntry), 0);
-	if (bytes < 0)
+	for (int i = 0; i < repeats; i++)
 	{
-    	LOG(ERROR) << ERR_NN_SEND << " out " << errno << ": " << nn_strerror(errno);
+		v.ssi_signal = htons(i);
+		int bytes = nn_send(write_socket, &v, sizeof(LogEntry), 0);
+		if (bytes < 0)
+		{
+			LOG(ERROR) << ERR_NN_SEND << " out " << errno << ": " << nn_strerror(errno) << std::endl;
+		}
+		else
+		{
+			if (verbosity > 2)
+				LOG(INFO) << MSG_NN_SENT_SUCCESS << message_url << " " << bytes << " bytes" << std::endl;
+		}
 	}
-	else
-	{
-		if (verbosity > 2)
-			LOG(INFO) << MSG_NN_SENT_SUCCESS << message_url << " " << bytes << " bytes" << std::endl;
-	}
-	
-	// flush?
-	shutdown(write_socket, SHUT_WR);
-	/*
+	nn_poll(&pollfd, 1, 100); // sleep(1); // wait for flushing
+	// shutdown(write_socket, SHUT_WR);
     int r = nn_shutdown(write_socket, eid);
     if (r)
-    	LOG(ERROR) << ERR_NN_SHUTDOWN << " out " << errno << ": " << nn_strerror(errno);
-	*/
-	sleep(1);
-	nn_term();
+    	LOG(ERROR) << ERR_NN_SHUTDOWN << " out " << errno << ": " << nn_strerror(errno) << std::endl;
 	if (write_socket)
 	{
 		close(write_socket);

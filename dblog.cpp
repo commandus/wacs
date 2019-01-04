@@ -175,14 +175,14 @@ int readLog
 {
 	if (!onLog)
 	{
-		LOG(ERROR) << ERR_WRONG_PARAM << "onLog";
+		LOG(ERROR) << ERR_WRONG_PARAM << "onLog" << std::endl;
 		return ERRCODE_WRONG_PARAM;
 	}
 	// start transaction
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
@@ -201,9 +201,11 @@ int readLog
 	// Get the last key
 	MDB_cursor *cursor;
 	MDB_val dbval;
+	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
@@ -246,7 +248,7 @@ int readLog
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
 		return ERRCODE_LMDB_TXN_COMMIT;
 	}
 	return r;

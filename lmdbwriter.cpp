@@ -42,8 +42,16 @@ START:
 		LOG(ERROR) << ERR_NN_BIND << config->message_url << std::endl;
 		return ERRCODE_NN_BIND;
 	}
-   	if (config->verbosity > 2)
+	if (config->verbosity > 2)
 		LOG(INFO) << MSG_BIND_SUCCESSFULLY << config->message_url << std::endl;
+
+	int recv_timeout = 1000;	// 1s
+	if (nn_setsockopt(accept_socket, NN_SOL_SOCKET, NN_RCVTIMEO, &recv_timeout, sizeof (recv_timeout)) < 0) 
+	{
+		LOG(ERROR) << ERR_NN_SET_SOCKET_OPTION << config->message_url << " timeout " << recv_timeout << std::endl;
+		return ERRCODE_NN_BIND;
+	}
+	// sleep (1); // wait for connections
 
 	struct dbenv env;
 
@@ -53,25 +61,30 @@ START:
 		return ERRCODE_LMDB_OPEN;
 	}
 
-    while (!config->stop_request)
-    {
+	while (!config->stop_request)
+	{
 		LogEntry e;
-    	int bytes = nn_recv(accept_socket, &e, sizeof(LogEntry), 0);
-    	if (bytes < 0)
-    	{
-			if (errno == EINTR) 
-			{
-				LOG(ERROR) << ERR_INTERRUPTED << std::endl;
-				config->stop_request = true;
-				break;
+		int bytes = nn_recv(accept_socket, &e, sizeof(LogEntry), 0);
+		if (bytes < 0)
+		{
+			switch (errno) {
+				case EINTR:
+					LOG(ERROR) << ERR_INTERRUPTED << std::endl;
+					config->stop_request = true;
+					break;
+				case ETIMEDOUT:
+					break;
+				default:
+					LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno) << std::endl;
+					break;
 			}
-			else
-				LOG(ERROR) << ERR_NN_RECV << errno << " " << strerror(errno) << std::endl;
-    		continue;
-    	}
-    	if (config->verbosity > 2)
-			LOG(INFO) << MSG_RECEIVED << bytes << std::endl;
-		putLog(&env, &e, bytes, config->verbosity);
+		} 
+		else
+		{
+			if (config->verbosity > 2)
+				LOG(INFO) << MSG_RECEIVED << bytes << std::endl;
+			putLog(&env, &e, bytes, config->verbosity);
+		}
     }
 	
 	int r = 0;
@@ -82,14 +95,12 @@ START:
 		r = ERRCODE_LMDB_CLOSE;
 	}
 
-	/*
 	r = nn_shutdown(accept_socket, eid);
 	if (r)
 	{
 		LOG(ERROR) << ERR_NN_SHUTDOWN << config->message_url << std::endl;
 		r = ERRCODE_NN_SHUTDOWN;
 	}
-	*/
 
 	nn_close(accept_socket);
 	accept_socket = 0;

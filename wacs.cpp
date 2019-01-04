@@ -26,6 +26,7 @@ void stopNWait()
 
 void done()
 {
+	exit(0);
 }
 
 int reslt;
@@ -41,11 +42,11 @@ void runner()
 }
 
 #ifdef _MSC_VER
-void setSignalHandler(int signal)
+static void setSignalHandler(int signal)
 {
 }
 #else
-void signalHandler(int signal)
+static void signalHandler(int signal)
 {
 	switch(signal)
 	{
