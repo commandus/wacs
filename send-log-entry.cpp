@@ -48,7 +48,7 @@ int sendLogEntry
 
 	for (int i = 0; i < repeats; i++)
 	{
-		v.ssi_signal = htons(i);
+		// v.ssi_signal = htons(i);
 		int bytes = nn_send(write_socket, &v, sizeof(LogEntry), 0);
 		if (bytes < 0)
 		{

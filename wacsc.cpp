@@ -96,10 +96,12 @@ static bool onLog
 {
 	std::cout
 		<< mactostr(key->sa)
-		<< "\t" << time_t2string(key->dt)
-		<< "\t" << data->device_id
-		<< "\t" << data->ssi_signal
-		<< std::endl;
+		<< "\t" << time_t2string(key->dt);
+	if (data)
+		std::cout
+			<< "\t" << data->device_id
+			<< "\t" << data->ssi_signal;
+	std::cout << std::endl;
 	return interruptFlag;
 }
 
@@ -134,11 +136,25 @@ static int lsLastProbe
 	WacscConfig *config
 )
 {
-	LogEntry value;
-	value.device_id = 1;
-	value.ssi_signal = 0xDEAD;
-	strtomacaddress(&value.sa, "de:ad:be:ef:be:ef");
-	return 0;
+	struct dbenv env;
+	int r = 0;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	uint8_t sa[6];
+	strtomacaddress(&sa, config->mac);
+	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, onLog);
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		r = ERRCODE_LMDB_CLOSE;
+	}
+
+	return r;
 }
 
 int main(int argc, char** argv)

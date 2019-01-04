@@ -125,8 +125,21 @@ typedef bool (*OnLastProbe)
 int readLog
 (
 	struct dbenv *env,
-	const uint8_t *sa,			// MAC address
-	time_t start,			// time, seconds since Unix epoch 
+	const uint8_t *sa,			///< MAC address
+	time_t start,				///< time, seconds since Unix epoch 
 	time_t finish,
+	OnLog onLog
+);
+
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param onLog callback
+ */
+int readLastProbe
+(
+	struct dbenv *env,
+	const uint8_t *sa,			///< MAC address
 	OnLog onLog
 );

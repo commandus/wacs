@@ -141,8 +141,8 @@ int putLog
 	// probe
 	key.tag = 'P';
 	dbkey.mv_size = sizeof(LastProbeKey);
-	dbdata.mv_size = 0; 
-	dbdata.mv_data = NULL;
+	dbdata.mv_size = sizeof(key.dt); 
+	dbdata.mv_data = &key.dt;
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	if (r)
 	{
@@ -241,8 +241,9 @@ int readLog
 #else
 		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 #endif	
-		if (memcmp(key1.sa, sa, 6) != 0)
-			break;
+		if (sa)
+			if (memcmp(key1.sa, sa, 6) != 0)
+				break;
 
 		if (finish > start) 
 		{
@@ -263,6 +264,88 @@ int readLog
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
 		if (onLog(NULL, &key1, &data))
+			break;
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}
+
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param onLog callback
+ */
+int readLastProbe
+(
+	struct dbenv *env,
+	const uint8_t *sa,			///< MAC address
+	OnLog onLog
+)
+{
+	if (!onLog)
+	{
+		LOG(ERROR) << ERR_WRONG_PARAM << "onLog" << std::endl;
+		return ERRCODE_WRONG_PARAM;
+	}
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LastProbeKey key;
+	key.tag = 'P';
+
+	if (sa)
+		memmove(key.sa, sa, 6);
+	else
+		memset(key.sa, 0, 6);
+
+	MDB_val dbkey;
+	dbkey.mv_size = sizeof(LastProbeKey);
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	MDB_val dbval;
+	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+
+	MDB_cursor_op dir = MDB_NEXT;
+
+	do {
+		LogKey key1;
+		if ((dbkey.mv_size < sizeof(LastProbeKey)) || (dbval.mv_size < sizeof(key1.dt)))
+			continue;
+		memmove(key1.sa, ((LastProbeKey*) dbkey.mv_data)->sa, 6);
+		if (sa)
+			if (memcmp(key1.sa, sa, 6) != 0)
+				break;
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+		key1.dt = be32toh(key1.dt);
+#endif	
+		if (onLog(NULL, &key1, NULL))
 			break;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
 
