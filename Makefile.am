@@ -6,10 +6,15 @@ ACLOCAL_AMFLAGS = -I m4
 bin_PROGRAMS = \
 	wacs wacsc
 
-commoncppflags = -O2 -I/usr/local/include -Ithird_party
-commoncppflags += -I/usr/local/opt/openssl@1.1/include
+#	Libraries
+lib_LIBRARIES = \
+	libwacs.a
+lib_LTLIBRARIES = \
+	libwacs.la
 
-commonlibs = -L. -L/usr/local/opt/openssl@1.1/lib
+commoncppflags = -O2 -I/usr/local/include -Ithird_party
+
+commonlibs = -L.
 
 #
 #	Exclude generated sources from distribution
@@ -32,6 +37,25 @@ nobase_dist_include_HEADERS = \
 	$(ARGT3HEADERS)
 
 common_src = $(ARGT3SOURCES)
+
+wacs_lib_source = \
+	lmdbwriter.cpp NanoMessage.cpp errorcodes.cpp \
+	dblog.cpp hostapd-log-entry.cpp send-log-entry.cpp \
+	utilstring.cpp
+
+#
+#	libwpn.a
+#
+libwacs_a_SOURCES = $(wacs_lib_source)
+libwacs_a_CPPFLAGS = $(commoncppflags)
+
+
+#
+#	libwpn.la C++ shared library
+#
+libwacs_la_SOURCES = $(wacs_lib_source)
+libwacs_la_CPPFLAGS = $(commoncppflags)
+libwacs_la_LDFLAGS = -version-info 0:1:0
 
 #
 #	wacs
