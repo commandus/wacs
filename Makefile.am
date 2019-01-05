@@ -30,7 +30,7 @@ AM_CXXFLAGS = -std=c++11
 
 nobase_dist_include_HEADERS = \
 	platform.h \
-	wacs-config.h wacs.h \
+	wacs-config.h wacs.h wacs-c.h \
 	wacsc-config.h wacsc.h utilstring.h \
 	dblog.h hostapd-log-entry.h send-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
 	daemonize.h \
@@ -46,14 +46,14 @@ wacs_lib_source = \
 #
 #	libwpn.a
 #
-libwacs_a_SOURCES = $(wacs_lib_source)
+libwacs_a_SOURCES = $(wacs_lib_source) wacs-c.cpp
 libwacs_a_CPPFLAGS = $(commoncppflags)
 
 
 #
 #	libwpn.la C++ shared library
 #
-libwacs_la_SOURCES = $(wacs_lib_source)
+libwacs_la_SOURCES = $(wacs_lib_source) wacs-c.cpp
 libwacs_la_CPPFLAGS = $(commoncppflags)
 libwacs_la_LDFLAGS = -version-info 0:1:0
 
