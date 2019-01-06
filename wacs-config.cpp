@@ -84,7 +84,7 @@ int WacsConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g.tcp://127.0.0.1:2019, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
+	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g. tcp://127.0.0.1:55555, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");

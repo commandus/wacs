@@ -1,8 +1,6 @@
 #ifndef WACS_C_H_
 #define WACS_C_H_	1
 
-#include "send-log-entry.h"
-
 /**
  * C wrapper
  */
@@ -23,8 +21,10 @@ extern "C" {
 
 EXPORT_C int sendLogEntryC
 (
-	const std::string &message_url,
-	const LogEntry* value,
+	const char *message_url,
+	unsigned int device_id,	// 0..255 AP identifier
+	int ssi_signal,			// dB
+	unsigned char* sa,		// MAC address
 	int repeats,
 	int verbosity
 );
