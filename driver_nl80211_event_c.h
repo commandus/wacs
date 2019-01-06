@@ -5,7 +5,14 @@
  * 
  * #include "driver_nl80211_event_c.h"
  * 
- * Then add include and library path to the wacs, add -lwacs and make it
+ * Then add include and library path to the wacs, add -lwacs in
+ * the file git/hostap/hostapd/Makefile:27
+ * 
+ * CFLAGS +=-I/home/andrei/src/wacs
+ * LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lmdbx
+ * 
+ * and make it.
+ * 
  * See http://quadfinity.blogspot.com/2014/09/compile-latest-hostapd-v2.3-on-Raspberry-Pi-or-ODROID.html
  * 
  */
