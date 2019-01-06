@@ -1,5 +1,108 @@
 # WACS
 
+[Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
+
+## hostapd config
+
+```
+sudo vi /etc/hostapd.conf:
+
+interface=wlx90f6520fe13a
+#bridge=br0
+driver=nl80211
+logger_stdout=-1
+logger_stdout_level=2
+
+#AP name
+ssid=mi
+hw_mode=g
+channel=6
+auth_algs=3
+max_num_sta=5
+wpa=2
+
+#Password
+wpa_passphrase=xxxxxxxx
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP CCMP
+rsn_pairwise=CCMP
+
+#Hide ssid
+#ignore_broadcast_ssid=1
+
+sudo killall wpa_supplicant
+
+sudo hostapd -d /etc/hostapd.conf >>hostapd.2.log
+
+## hostapd log 
+
+grep MAC address
+
+```
+grep RX hostapd.log | cut -d ' ' -f 4 | cut -d '=' -f 2 | sort |  uniq
+40:f3:08:4a:6a:05
+72:56:8e:e5:42:b0
+```
+
+## hostapd build
+
+[How to build](http://quadfinity.blogspot.com/2014/09/compile-latest-hostapd-v2.3-on-Raspberry-Pi-or-ODROID.html)
+
+Note CONFIG_TLS=gnutls with openssl can not find openssl?
+
+## hostapd changes
+
+In the git/hostap/src/drivers/driver_nl80211_event.c
+
+after line 650: 
+
+```
+mlme_event_mgmt() -> wpa_printf()
+```
+
+add line:
+
+```
+#include "driver_nl80211_event_c.h"
+```
+
+In the file git/hostap/hostapd/Makefile
+
+after line 27 add include and lib path, add libked libraries:
+
+```
+CFLAGS +=-I/home/andrei/src/wacs
+LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lmdbx
+```
+
+Then
+
+make
+ 
+## Database tables
+
+### log
+
++-------------+-------------+-------------+-------------+
+|  Attribute  |    Bytes    |   Key/value |    Remarks  |
++-------------+-------------+-------------+-------------+
+|  tag        |      1      |   Key       | 'L'         |
+|  sa         |      6      |   Key       | MAC addr    |
+|  dt         |      4      |   Key       | seconds     |
+|  device_id  |      2      |   Value     | 0..65535    |
+|  ssi_signal |      2      |   Value     | dB          |
++-------------+-------------+-------------+-------------+
+
+### last_probe
+
++-------------+-------------+-------------+-------------+
+|  Attribute  |    Bytes    |   Key/value |    Remarks  |
++-------------+-------------+-------------+-------------+
+|  tag        |      1      |   Key       | 'L'         |
+|  sa         |      6      |   Key       | MAC addr    |
+|  dt         |      4      |   Value     | seconds     |
++-------------+-------------+-------------+-------------+
+
 ## Architecture
 
 ```
@@ -23,6 +126,8 @@
 ## Dependencies
 
 ### libmdbx (LMDB clone)
+
+[libmdbx](https://github.com/leo-yuriev/libmdbx)
 
 OpenLDAP Public License
 

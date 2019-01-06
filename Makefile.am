@@ -29,7 +29,7 @@ ARGT3SOURCES = third_party/argtable3/argtable3.c
 AM_CXXFLAGS = -std=c++11 
 
 nobase_dist_include_HEADERS = \
-	platform.h \
+	platform.h log.h \
 	wacs-config.h wacs.h wacs-c.h \
 	wacsc-config.h wacsc.h utilstring.h \
 	dblog.h hostapd-log-entry.h send-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
@@ -87,6 +87,7 @@ wacsc_CPPFLAGS = $(commoncppflags)
 #
 configdir = $(datadir)
 dist_config_DATA = \
+	autogen.sh \
 	LICENSE COPYING CODE_OF_CONDUCT.md CONTRIBUTING.md HISTORY README.md \
 	third_party/argtable3/README.argtable3.md
 	autogen.sh
