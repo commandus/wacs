@@ -144,9 +144,10 @@ static bool onReqLog
 	*req->retval << "{\"sa\":\"" << mactostr(key->sa) << "\",\"dt\":" << key->dt;
 	if (data)
 		*req->retval
-			<< "\",\"device_id\":" << data->device_id
-			<< "\",\"ssi_signal\":" << data->ssi_signal
-			<< "},";
+			<< ",\"device_id\":" << data->device_id
+			<< ",\"ssi_signal\":" << data->ssi_signal;
+	*req->retval			
+		<< "},";
 	return false;
 }
 
