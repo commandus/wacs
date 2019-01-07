@@ -16,6 +16,9 @@
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #define HAVE_LIBCRYPTO 1
 
+/* Define to 1 if you have the `microhttpd' library (-lmicrohttpd). */
+#define HAVE_LIBMICROHTTPD 1
+
 /* Define to 1 if you have the `nanomsg' library (-lnanomsg). */
 #define HAVE_LIBNANOMSG 1
 

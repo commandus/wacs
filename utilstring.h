@@ -16,3 +16,5 @@ std::string time_t2string
 (
 	time_t value
 );
+
+std::string getDefaultDatabasePath();

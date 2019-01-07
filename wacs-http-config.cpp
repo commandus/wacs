@@ -1,4 +1,4 @@
-#include "wacs-config.h"
+#include "wacs-http-config.h"
 #include <iostream>
 #include <argtable3/argtable3.h>
 #include <sys/types.h>
@@ -8,19 +8,22 @@
 #include "platform.h"
 #include "utilstring.h"
 
-#define progname "wacs"
+#define progname "wacs-http"
 
+#define DEF_ROOT					"."
+#define DEF_PORT					55550
+#define DEF_PORT_STR				"55550"
 #define DEF_DB_PATH					"."
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
 
-WacsConfig::WacsConfig()
-	: errorcode(0), cmd(0), verbosity(0), 
-	path(getDefaultDatabasePath())
+WacsHttpConfig::WacsHttpConfig()
+	: errorcode(0), port(DEF_PORT), verbosity(0), 
+	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath())
 {
 }
 	
-WacsConfig::WacsConfig
+WacsHttpConfig::WacsHttpConfig
 (
 	int argc,
 	char* argv[]
@@ -29,23 +32,24 @@ WacsConfig::WacsConfig
 	errorcode = parseCmd(argc, argv);
 }
 
-WacsConfig::~WacsConfig()
+WacsHttpConfig::~WacsHttpConfig()
 {
 }
 
 /**
- * Parse command line into WacsConfig class
+ * Parse command line into WacsHttpConfig class
  * Return 0- success
  *        1- show help and exit, or command syntax error
  *        2- output file does not exists or can not open to write
  **/
-int WacsConfig::parseCmd
+int WacsHttpConfig::parseCmd
 (
 	int argc,
 	char* argv[]
 )
 {
-	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g. tcp://127.0.0.1:55555, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
+	struct arg_str *a_root_path = arg_str0("d", "root", "<path>", "Default " DEF_ROOT);
+	struct arg_int *a_port = arg_int0("p", "port", "<number>", "Default " DEF_PORT_STR);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
@@ -60,7 +64,7 @@ int WacsConfig::parseCmd
 	struct arg_end *a_end = arg_end(20);
 
 	void* argtable[] = { 
-		a_message_url,
+		a_root_path, a_port,
 		a_db_path, a_flags, a_mode,
 		a_daemonize, a_max_fd, 
 		a_verbosity, a_help, a_end 
@@ -79,10 +83,14 @@ int WacsConfig::parseCmd
 
 	verbosity = a_verbosity->count;
 
-	if (a_message_url->count)
-		message_url = *a_message_url->sval;
+	if (a_root_path->count)
+		root_path = *a_root_path->sval;
 	else
-		message_url = DEF_QUEUE;
+		root_path = DEF_ROOT;
+	if (a_port->count)
+		port = *a_port->ival;
+	else
+		mode = DEF_PORT;
 
 	if (a_db_path->count)
 		path = *a_db_path->sval;
@@ -114,7 +122,7 @@ int WacsConfig::parseCmd
 			arg_print_errors(stderr, a_end, progname);
 		std::cerr << "Usage: " << progname << std::endl;
 		arg_print_syntax(stderr, argtable, "\n");
-		std::cerr << "wacs listener" << std::endl;
+		std::cerr << "wacs http listener" << std::endl;
 		arg_print_glossary(stderr, argtable, "  %-25s %s\n");
 		arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
 		return 1;
@@ -124,7 +132,7 @@ int WacsConfig::parseCmd
 	return 0;
 }
 
-int WacsConfig::error()
+int WacsHttpConfig::error()
 {
 	return errorcode;
 }

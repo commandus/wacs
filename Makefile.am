@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
 bin_PROGRAMS = \
-	wacs wacsc
+	wacs wacsc wacs-http
 
 #	Libraries
 lib_LIBRARIES = \
@@ -30,8 +30,8 @@ AM_CXXFLAGS = -std=c++11
 
 nobase_dist_include_HEADERS = \
 	platform.h log.h \
-	wacs-config.h wacs.h wacs-c.h \
-	wacsc-config.h wacsc.h utilstring.h \
+	wacs-config.h wacs.h wacs-c.h wacs-http-config.h \
+	wacsc-config.h wacsc.h utilstring.h http-server.h \
 	dblog.h hostapd-log-entry.h send-log-entry.h lmdbwriter.h NanoMessage.h errorcodes.h \
 	daemonize.h \
 	$(ARGT3HEADERS)
@@ -64,7 +64,7 @@ wacs_SOURCES= \
 	wacs-config.cpp wacs.cpp \
 	lmdbwriter.cpp NanoMessage.cpp errorcodes.cpp \
 	dblog.cpp hostapd-log-entry.cpp \
-	daemonize.cpp \
+	daemonize.cpp utilstring.cpp \
 	$(common_src)
 wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacs_CPPFLAGS = $(commoncppflags)
@@ -81,6 +81,17 @@ wacsc_SOURCES= \
 wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacsc_CPPFLAGS = $(commoncppflags)
 
+#
+#	wacs-http
+#
+wacs_http_SOURCES= \
+	wacs-http.cpp wacs-http-config.cpp \
+	http-server.cpp \
+	dblog.cpp hostapd-log-entry.cpp \
+	utilstring.cpp daemonize.cpp \
+	$(common_src)
+wacs_http_LDADD = $(commonlibs) -lmicrohttpd -lmdbx
+wacs_http_CPPFLAGS = $(commoncppflags)
 
 #
 #	Configs, readme, CMake etc.

@@ -21,38 +21,6 @@
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
 
-#ifdef _MSC_VER
-static std::string getDefaultDatabasePath()
-{
-	std::string r = "";
-	// Need a process with query permission set
-	HANDLE hToken = 0;
-	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-	{
-		// Returns a path like C:/Documents and Settings/nibu if my user name is nibu
-		char homedir[MAX_PATH];
-		DWORD size = sizeof(homedir);
-		if (GetUserProfileDirectoryA(hToken, homedir, &size) && (size > 0))
-		{
-			r = std::string(homedir, size - 1);
-		}
-		CloseHandle(hToken);
-	}
-	return r;
-}
-#else
-/**
-* https://stackoverflow.com/questions/2910377/get-home-directory-in-linux-c
-*/
-static  std::string getDefaultDatabasePath()
-{
-	struct passwd *pw = getpwuid(getuid());
-	const char *homedir = pw->pw_dir;
-	std::string r(homedir);
-	return r;
-}
-#endif
-
 WacscConfig::WacscConfig()
 	: errorcode(0), cmd(0), verbosity(0), 
 	path(getDefaultDatabasePath())
