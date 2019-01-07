@@ -121,6 +121,95 @@ public:
 	WacsHttpConfig *config;
 };
 
+struct ReqEnv
+{
+	struct dbenv *dbEnv;
+	std::stringstream *retval;
+} ReqEnv;
+
+static bool onReqLog
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	struct ReqEnv *req = (struct ReqEnv *) env;
+	*req->retval << "{\"sa\":\"" << mactostr(key->sa) << "\",\"dt\":" << key->dt;
+	if (data)
+		*req->retval
+			<< "\",\"device_id\":" << data->device_id
+			<< "\",\"ssi_signal\":" << data->ssi_signal
+			<< "},";
+	return false;
+}
+
+static std::string lsLog
+(
+	const WacsHttpConfig *config,
+	const RequestParams *params
+)
+{
+	struct ReqEnv env;
+	struct dbenv db;
+	std::stringstream ss;
+	env.dbEnv = &db;
+	env.retval = &ss;
+	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return "";
+	}
+
+	uint8_t sa[6];
+	strtomacaddress(&sa, params->sa);
+	ss << "[";
+	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, params->start, params->finish, onReqLog);
+	ss << "]";
+	if (!closeDb(env.dbEnv))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return "";
+	}
+	std::string r(ss.str());
+	if (r.size() > 2)
+		r[r.size() - 2] = ' ';	// remove last ','
+	return r;
+}
+
+static std::string lsLastProbe
+(
+	const WacsHttpConfig *config,
+	const RequestParams *params
+)
+{
+	struct ReqEnv env;
+	struct dbenv db;
+	std::stringstream ss;
+	env.dbEnv = &db;
+	env.retval = &ss;
+	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return "";
+	}
+
+	uint8_t sa[6];
+	strtomacaddress(&sa, params->sa);
+	ss << "[";
+	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, onReqLog);
+	ss << "]";
+	if (!closeDb(env.dbEnv))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return "";
+	}
+	std::string r(ss.str());
+	if (r.size() > 2)
+		r[r.size() - 2] = ' ';	// remove last ','
+	return r;
+}
+
 const char *mimeTypeByFileExtention
 (
 	const std::string &filename
@@ -253,15 +342,14 @@ static int httpHandler
 
 	RequestParams params(connection, url);
 
-	
 	*ptr = NULL; /* clear context pointer */
-	
-	
+
 	HttpEnv *env = (HttpEnv*) cls;
 	std::string data = "";
 	switch (params.requestType)
 	{
 	case RT_LOG:
+		data = lsLog(env->config, &params);
 		if (data.empty())
 			response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
 		else
@@ -269,6 +357,7 @@ static int httpHandler
 		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
 		break;
 	case RT_LAST_LOG:
+		data = lsLastProbe(env->config, &params);
 		if (data.empty())
 			response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
 		else
@@ -298,7 +387,6 @@ int run
 	WacsHttpConfig *config
 )
 {
-START:
 	config->stop_request = 0;
 	httpEnv.config = config;
 	mhdDaemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, config->port, NULL, NULL, &httpHandler, (void *) &httpEnv, MHD_OPTION_END);
@@ -314,8 +402,7 @@ START:
 /**
  *  @brief Stop writer
  *  @param config
- *  @return 0- success
- *          >0- config is not initialized yet
+ *  @return 0- success,  >0- config is not initialized yet
  */
 int stop
 (
