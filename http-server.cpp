@@ -74,7 +74,7 @@ public:
 		parseUriParams(connection);
 	}
 private:
-	RequestType parseRequestType(const char *url)
+	static RequestType parseRequestType(const char *url)
 	{
 		int i;
 		for (i = 0; i < PATH_COUNT; i++)
@@ -100,8 +100,12 @@ private:
 		struct MHD_Connection *connection
 	)
 	{
-		sa = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[2]);
-		const char *v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[0]);
+		const char *v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[2]);
+		if (v)
+			sa = v;
+		else
+			sa = "";
+		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[0]);
 		if (v)
 			start = strtol(v, NULL, 0);
 		else
@@ -134,6 +138,8 @@ static bool onReqLog
 	LogData *data
 )
 {
+	if (!env)
+		return true;
 	struct ReqEnv *req = (struct ReqEnv *) env;
 	*req->retval << "{\"sa\":\"" << mactostr(key->sa) << "\",\"dt\":" << key->dt;
 	if (data)
@@ -164,7 +170,7 @@ static std::string lsLog
 	uint8_t sa[6];
 	strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, params->start, params->finish, onReqLog);
+	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, params->start, params->finish, onReqLog, (void *) &env);
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -197,7 +203,7 @@ static std::string lsLastProbe
 	uint8_t sa[6];
 	strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, onReqLog);
+	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, onReqLog, &env);
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{

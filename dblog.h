@@ -121,6 +121,7 @@ typedef bool (*OnLastProbe)
  * @param start 0- no limit
  * @param finish 0- no limit
  * @param onLog callback
+ * @param onLogEnv object passed to callback
  */
 int readLog
 (
@@ -128,7 +129,8 @@ int readLog
 	const uint8_t *sa,			///< MAC address
 	time_t start,				///< time, seconds since Unix epoch 
 	time_t finish,
-	OnLog onLog
+	OnLog onLog,
+	void *onLogEnv
 );
 
 /**
@@ -136,10 +138,12 @@ int readLog
  * @param env database env
  * @param sa can be NULL
  * @param onLog callback
+ * @param onLogEnv object passed to callback
  */
 int readLastProbe
 (
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address
-	OnLog onLog
+	OnLog onLog,
+	void *onLogEnv
 );

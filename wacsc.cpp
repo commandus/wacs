@@ -107,7 +107,8 @@ static bool onLog
 
 static int lsLog
 (
-	WacscConfig *config
+	WacscConfig *config,
+	void *onLogEnv
 )
 {
 	struct dbenv env;
@@ -120,7 +121,7 @@ static int lsLog
 
 	uint8_t sa[6];
 	strtomacaddress(&sa, config->mac);
-	r = readLog(&env, config->mac.empty() ? NULL : sa, config->start, config->finish, onLog);
+	r = readLog(&env, config->mac.empty() ? NULL : sa, config->start, config->finish, onLog, onLogEnv);
 
 	if (!closeDb(&env))
 	{
@@ -133,7 +134,8 @@ static int lsLog
 
 static int lsLastProbe
 (
-	WacscConfig *config
+	WacscConfig *config,
+	void *onLogEnv
 )
 {
 	struct dbenv env;
@@ -146,7 +148,7 @@ static int lsLastProbe
 
 	uint8_t sa[6];
 	strtomacaddress(&sa, config->mac);
-	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, onLog);
+	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, onLog, onLogEnv);
 
 	if (!closeDb(&env))
 	{
@@ -183,10 +185,10 @@ int main(int argc, char** argv)
 		reslt = sendTest(config);
 		break;
 	case CMD_LS_LOG:
-		reslt = lsLog(config);
+		reslt = lsLog(config, NULL);
 		break;
 	case CMD_LS_LAST_PROBE:
-		reslt = lsLastProbe(config);
+		reslt = lsLastProbe(config, NULL);
 		break;
 	default:
 		break;

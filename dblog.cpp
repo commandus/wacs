@@ -174,7 +174,8 @@ int readLog
 	const uint8_t *sa,			// MAC address
 	time_t start,			// time, seconds since Unix epoch 
 	time_t finish,
-	OnLog onLog
+	OnLog onLog,
+	void *onLogEnv
 )
 {
 	if (!onLog)
@@ -263,7 +264,7 @@ int readLog
 		LogData data;
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
-		if (onLog(NULL, &key1, &data))
+		if (onLog(onLogEnv, &key1, &data))
 			break;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
 
@@ -286,7 +287,8 @@ int readLastProbe
 (
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address
-	OnLog onLog
+	OnLog onLog,
+	void *onLogEnv
 )
 {
 	if (!onLog)
@@ -345,7 +347,7 @@ int readLastProbe
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
 		key1.dt = be32toh(key1.dt);
 #endif	
-		if (onLog(NULL, &key1, NULL))
+		if (onLog(onLogEnv, &key1, NULL))
 			break;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
 
