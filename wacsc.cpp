@@ -35,8 +35,10 @@ void signalHandler(int signal)
 	case SIGINT:
 		if (interruptFlag)
 		{
-			if (config)
+			if (config) 
+			{
 				delete config;
+			}
 			exit(ERR_OK);
 		}
 		else

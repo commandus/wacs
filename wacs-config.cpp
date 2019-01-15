@@ -50,6 +50,9 @@ int WacsConfig::parseCmd
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
 
+	// SNMP
+	struct arg_lit *a_snmp_agent = arg_lit0(NULL, "snmp", "Run SNMP agent");
+	
 	// deamon
 	struct arg_lit *a_daemonize = arg_lit0("d", "daemonize", "Start as daemon/service");
 	struct arg_int *a_max_fd = arg_int0(NULL, "maxfd", "<number>", "Set max file descriptors. 0- use default (1024).");
@@ -101,6 +104,7 @@ int WacsConfig::parseCmd
 	else
 		flags = DEF_FLAGS;
 
+	snmp_agent = a_snmp_agent->count > 0;
 	daemonize = a_daemonize->count > 0;
 	if (a_max_fd > 0)
 		max_fd = *a_max_fd->ival;

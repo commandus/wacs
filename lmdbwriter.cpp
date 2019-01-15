@@ -20,7 +20,55 @@
 #include "dblog.h"
 #include "log.h"
 
+#define USE_SNMP 1
+#ifdef USE_SNMP
+#include "utilsnmp.h"
+#include "snmpagent-wacs.h"
+#endif
+
 #define BUF_SIZE	128
+
+#define snmp_name	"wacs"
+
+#ifdef USE_SNMP
+static void init_mibs()
+{
+	init_databasefilename();
+	init_ip();
+	init_port();
+	init_starttime();
+	init_requestsperhour();
+	init_lastmac();
+	init_lastssisignal();
+	init_totalmac();
+	init_databasefilesize();
+	init_memorypeak();
+	init_memorycurrent();
+	init_errorcount();
+}
+#endif	
+
+static void snmpInitialize
+(
+	const WacsConfig *config
+)
+{
+#ifdef USE_SNMP
+	if (config->snmp_agent)
+		snmpInit(snmp_name, config->snmp_agent, config->verbosity, &config->stop_request, init_mibs);
+#endif	
+}
+
+static void snmpDone
+(
+	const WacsConfig *config
+)
+{
+#ifdef USE_SNMP
+	if (config->snmp_agent > 0)
+		snmpDone(snmp_name);
+#endif	
+}
 
 /**
  * @brief Write LMDB loop
@@ -34,6 +82,7 @@ int run
 )
 {
 START:
+	snmpInitialize(config);
 	config->stop_request = 0;
 	int accept_socket = nn_socket(AF_SP, NN_BUS);
 	int eid = nn_bind(accept_socket, config->message_url.c_str());
@@ -104,7 +153,7 @@ START:
 
 	nn_close(accept_socket);
 	accept_socket = 0;
-
+	snmpDone(config);
 	return r;
 }
 
