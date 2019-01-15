@@ -1,12 +1,29 @@
 #!/bin/sh
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf databaseinstance
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf starttime
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf requestcount
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorypeak 
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorycurrent 
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf errorcount 
-env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf ticketssold 
-cat databaseinstance.h starttime.h requestcount.h memorypeak.h memorycurrent.h errorcount.h ticketssold.h > snmpagentonewyaticket.h
-rm  databaseinstance.h starttime.h requestcount.h memorypeak.h memorycurrent.h errorcount.h ticketssold.h
-cat databaseinstance.c starttime.c requestcount.c memorypeak.c memorycurrent.c errorcount.c ticketssold.c > snmpagentonewyaticket.c
-rm  databaseinstance.c starttime.c requestcount.c memorypeak.c memorycurrent.c errorcount.c ticketssold.c
+#
+# Auto-generate snmpagent-wacs.* files
+# snmpagent-wacs.* already included in the repository, so you don't need to do it.
+# To do it, you must have installed SNMP libraries and environment
+#
+# MIB files by default is not accessibly by the SNMP tools, see
+# https://askubuntu.com/questions/488060/adding-usr-share-mibs-cisco-to-snmp-mib-search-path
+#
+# 1. Copy MIBs to the searchable MIB directory
+#  ls ~/.snmp/mibs/
+#  COMMANDUS-SMI-MIB  EAS-IKFIA-MIB  IKFIA-SMI-MIB  ONEWAYTICKET-COMMANDUS-MIB  WACS-COMMANDUS-MIB
+# 2. Run tools/mksnmp
+#
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf databasefilename
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf ip
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf port
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf starttime
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf requestsperhour
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf lastmac
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf lastssisignal
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf totalmac
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf databasefilesize
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorypeak 
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorycurrent 
+env MIBS="+WACS-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf errorcount 
+cat databasefilename.h ip.h port.h starttime.h requestsperhour.h lastmac.h lastssisignal.h totalmac.h databasefilesize.h memorypeak.h memorycurrent.h errorcount.h > snmpagent-wacs.h
+cat databasefilename.c ip.c port.c starttime.c requestsperhour.c lastmac.c lastssisignal.c totalmac.c databasefilesize.c memorypeak.c memorycurrent.c errorcount.c > snmpagent-wacs.c
+rm  databasefilename.* ip.* port.* starttime.* requestsperhour.* lastmac.* lastssisignal.* totalmac.* databasefilesize.* memorypeak.* memorycurrent.* errorcount.*
