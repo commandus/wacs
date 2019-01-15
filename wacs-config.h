@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "snmp-params.h"
+
 /**
  * Command line interface (CLI) tool configuration structure
  */
@@ -28,7 +30,7 @@ private:
 	);
 	int errorcode;
 public:
-	int stop_request;
+	bool stop_request;
 	std::string message_url;
 	int cmd;										///< CMD_*
 	int verbosity;									///< 0-quiet, 3- debug
@@ -47,6 +49,7 @@ public:
 	);
 	~WacsConfig();
 	int error();
+	MonitoringParams *counter;
 };
 
 #endif

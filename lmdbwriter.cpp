@@ -15,7 +15,6 @@
 
 #include "errorcodes.h"
 #include "lmdbwriter.h"
-#include "send-log-entry.h"
 
 #include "dblog.h"
 #include "log.h"
@@ -23,45 +22,35 @@
 #define USE_SNMP 1
 #ifdef USE_SNMP
 #include "utilsnmp.h"
+#include "snmp-params.h"
 #include "snmpagent-wacs.h"
+#include "snmp-params.h"
 #endif
 
 #define BUF_SIZE	128
 
 #define snmp_name	"wacs"
 
-#ifdef USE_SNMP
-static void init_mibs()
-{
-	init_databasefilename();
-	init_ip();
-	init_port();
-	init_starttime();
-	init_requestsperhour();
-	init_lastmac();
-	init_lastssisignal();
-	init_totalmac();
-	init_databasefilesize();
-	init_memorypeak();
-	init_memorycurrent();
-	init_errorcount();
-}
-#endif	
-
 static void snmpInitialize
 (
-	const WacsConfig *config
+	WacsConfig *config
 )
 {
 #ifdef USE_SNMP
-	if (config->snmp_agent)
-		snmpInit(snmp_name, config->snmp_agent, config->verbosity, &config->stop_request, init_mibs);
+	if (config)
+	{
+		config->counter = getInstance();
+		config->counter->clear();
+		config->counter->databasefilename = config->path;
+		if (config->snmp_agent)
+			snmpInit(snmp_name, config->snmp_agent, config->verbosity, &config->stop_request, init_mibs);
+	}
 #endif	
 }
 
 static void snmpDone
 (
-	const WacsConfig *config
+	WacsConfig *config
 )
 {
 #ifdef USE_SNMP
@@ -133,9 +122,13 @@ START:
 			if (config->verbosity > 2)
 				LOG(INFO) << MSG_RECEIVED << bytes << std::endl;
 			putLog(&env, &e, bytes, config->verbosity);
+#ifdef USE_SNMP
+			if ((config->counter != NULL) && config->snmp_agent)
+				config->counter->put(&e);
+#endif			
 		}
     }
-	
+
 	int r = 0;
 
 	if (!closeDb(&env))

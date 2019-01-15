@@ -36,7 +36,7 @@ void htonLogEntry
  */
 std::string mactostr
 (
-	void *value
+	const void *value
 )
 {
 	std::stringstream ss;

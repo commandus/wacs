@@ -15,7 +15,7 @@
 #define DEF_FLAGS					0
 
 WacsConfig::WacsConfig()
-	: errorcode(0), cmd(0), verbosity(0), 
+	: errorcode(0), cmd(0), verbosity(0), counter(NULL),
 	path(getDefaultDatabasePath())
 {
 }
@@ -25,7 +25,9 @@ WacsConfig::WacsConfig
 	int argc,
 	char* argv[]
 )
+	: counter(NULL)
 {
+	
 	errorcode = parseCmd(argc, argv);
 }
 

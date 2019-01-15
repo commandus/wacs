@@ -22,6 +22,9 @@
 /* Define to 1 if you have the `nanomsg' library (-lnanomsg). */
 #define HAVE_LIBNANOMSG 1
 
+/* Define to 1 if you have the `snmp' library (-lsnmp). */
+#define HAVE_LIBSNMP 1
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 

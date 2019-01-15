@@ -13,9 +13,9 @@
 #include "platform.h"
 #include "utilstring.h"
 #include "wacsc.h"
-#include "send-log-entry.h"
 #include "dblog.h"
 #include "errorcodes.h"
+#include "send-log-entry.h"
 
 static WacscConfig *config = NULL;
 

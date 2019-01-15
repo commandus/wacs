@@ -1,3 +1,9 @@
+/**
+ * 
+ */
+
+#ifndef HOSTAPD_LOG_ENTRY_H
+#define HOSTAPD_LOG_ENTRY_H 1
 #include <string>
 #include <stdint.h>
 
@@ -32,7 +38,7 @@ void htonLogEntry(LogEntry *value);
  */
 std::string mactostr
 (
-	void *value
+	const void *value
 );
 
 /**
@@ -51,3 +57,5 @@ bool strtomacaddress
 	void *retval,
 	const std::string &value
 );
+
+#endif

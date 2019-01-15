@@ -1,11 +1,28 @@
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-#include <net-snmp/agent/net-snmp-agent-includes.h>
-
 #include "snmpagent-wacs.h"
 #include "get_rss.h"
 
-static struct SNMP_SVC_ONEWAYTICKET counter;
+static MonitoringParams counter;
+
+MonitoringParams *getInstance()
+{
+	return &counter;
+}
+
+void init_mibs()
+{
+	init_databasefilename();
+	init_ip();
+	init_port();
+	init_starttime();
+	init_requestsperhour();
+	init_lastmac();
+	init_lastssisignal();
+	init_totalmac();
+	init_databasefilesize();
+	init_memorypeak();
+	init_memorycurrent();
+	init_errorcount();
+}
 
 void init_databasefilename(void)
 {
@@ -40,7 +57,7 @@ void init_port(void)
 void init_starttime(void)
 {
     const oid       starttime_oid[] =
-        { 1, 3, 6, 1, 4, 1, 46821, 2, 1, 1, 4 };
+        { 1, 3, 6, 1, 4, 1, 46821, 2, 1, 2, 4 };
     DEBUGMSGTL(("starttime", "Initializing\n"));
     netsnmp_register_scalar(netsnmp_create_handler_registration
                             ("starttime", handle_starttime, starttime_oid,
@@ -63,7 +80,7 @@ void init_requestsperhour(void)
 void init_lastmac(void)
 {
     const oid       lastmac_oid[] =
-        { 1, 3, 6, 1, 4, 1, 46821, 2, 1, 1, 6 };
+        { 1, 3, 6, 1, 4, 1, 46821, 2, 1, 2, 6 };
     DEBUGMSGTL(("lastmac", "Initializing\n"));
     netsnmp_register_scalar(netsnmp_create_handler_registration
                             ("lastmac", handle_lastmac, lastmac_oid,
@@ -150,12 +167,8 @@ int handle_databasefilename(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			counter.databasefilename.c_str(),
+			counter.databasefilename.size());
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_databasefilename\n",
@@ -173,13 +186,10 @@ int handle_ip(netsnmp_mib_handler *handler,
 {
     switch (reqinfo->mode) {
     case MODE_GET:
+		counter.getIP();
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			counter.ip.c_str(),
+			counter.ip.size());
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_ip\n",
@@ -198,12 +208,8 @@ int handle_port(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.port,
+			sizeof(counter.port));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_port\n",
@@ -221,12 +227,8 @@ int handle_starttime(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.starttime,
+			sizeof(counter.starttime));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_starttime\n",
@@ -246,12 +248,8 @@ int handle_requestsperhour(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.requestsperhour,
+			sizeof(counter.requestsperhour));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_requestsperhour\n",
@@ -271,15 +269,9 @@ int handle_lastmac(netsnmp_mib_handler *handler,
 
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			counter.lastmac.c_str(),
+			counter.lastmac.size());
         break;
-
-
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_lastmac\n",
                  reqinfo->mode);
@@ -297,19 +289,14 @@ int handle_lastssisignal(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.lastssisignal,
+			sizeof(counter.lastssisignal));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_lastssisignal\n",
                  reqinfo->mode);
         return SNMP_ERR_GENERR;
     }
-
     return SNMP_ERR_NOERROR;
 }
 
@@ -321,12 +308,8 @@ int handle_totalmac(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.totalmac,
+			sizeof(counter.totalmac));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_totalmac\n",
@@ -342,30 +325,19 @@ int handle_databasefilesize(netsnmp_mib_handler *handler,
                         netsnmp_request_info *requests)
 {
     switch (reqinfo->mode) {
-
     case MODE_GET:
-        snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+		{
+			uint32_t r = counter.getDatabaseFileSize() / 1024;
+			snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER, &r, sizeof(r));
+		}
         break;
-
-
     default:
-        /*
-         * we should never get here, so this is a really bad error 
-         */
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_databasefilesize\n",
                  reqinfo->mode);
         return SNMP_ERR_GENERR;
     }
-
     return SNMP_ERR_NOERROR;
 }
-
 
 int handle_memorypeak(netsnmp_mib_handler *handler,
                   netsnmp_handler_registration *reginfo,
@@ -374,15 +346,12 @@ int handle_memorypeak(netsnmp_mib_handler *handler,
 {
     switch (reqinfo->mode) {
     case MODE_GET:
-        	counter.memorypeak = getPeakRSS() / 1024;
-            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-            		&counter.memorypeak,
-            		sizeof(counter.memorypeak));
+		{
+			uint32_t r = getPeakRSS() / 1024;
+			snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER, &r, sizeof(r));
+		}
         break;
     default:
-        /*
-         * we should never get here, so this is a really bad error 
-         */
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_memorypeak\n",
                  reqinfo->mode);
         return SNMP_ERR_GENERR;
@@ -398,10 +367,10 @@ int handle_memorycurrent(netsnmp_mib_handler *handler,
 {
     switch (reqinfo->mode) {
     case MODE_GET:
-        	counter.memorycurrent = getCurrentRSS() / 1024;
-            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-            		&counter.memorycurrent,
-            		sizeof(counter.memorycurrent));
+		{
+			uint32_t r = getCurrentRSS() / 1024;
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER, &r, sizeof(r));
+		}
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_memorycurrent\n",
@@ -419,18 +388,13 @@ int handle_errorcount(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
     case MODE_GET:
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+			&counter.errorcount,
+			sizeof(counter.errorcount));
         break;
     default:
         snmp_log(LOG_ERR, "unknown mode (%d) in handle_errorcount\n",
                  reqinfo->mode);
         return SNMP_ERR_GENERR;
     }
-
     return SNMP_ERR_NOERROR;
 }
