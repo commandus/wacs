@@ -125,6 +125,12 @@ make
 
 ## Dependencies
 
+### SNMP
+
+[libsnmp-dev](http://www.net-snmp.org/)
+
+version 5.7.3 sudo apt install libsnmp-dev snmp snmpd snmptrapd 
+
 ### libmdbx (LMDB clone)
 
 [libmdbx](https://github.com/leo-yuriev/libmdbx)
@@ -158,4 +164,56 @@ git clone git@github.com:nanomsg/nanomsg.git
 
 ```
 ./wacsc log -vvv -d 1 -a "11:22:33:44:55:66"
+```
+
+## SNMP settings
+
+#### Cannot find module (SNMPv2-MIB)
+
+```
+sudo apt-get install snmp-mibs-downloader snmptrapd
+sudo download-mibs
+sudo sed -i "s/^\(mibs *:\).*/#\1/" /etc/snmp/snmp.conf
+```
+
+```
+mkdir -vp ~/.snmp/mibs
+sudo mkdir -p /root/.snmp/mib
+cp mib/* ~/.snmp/mibs
+sudo cp mib/* /root/.snmp/mib
+
+sudo /etc/init.d/snmpd stop
+
+snmptranslate -On -m +WACS-COMMANDUS-MIB -IR wacsservice
+.1.3.6.1.4.1.46821.2.1
+
+smilint -l3  -s -p ./mib/*
+
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::totalmac.0
+WACS-COMMANDUS-MIB::totalmac.0 = INTEGER: 0
+
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::memorycurrent.0
+WACS-COMMANDUS-MIB::memorycurrent.0 = INTEGER: 29784
+```
+
+#### ERROR: You don't have the SNMP perl module installed.
+
+#### Warning: no access control information configured.
+
+```
+Warning: no access control information configured.
+  (Config search path: /etc/snmp:/usr/share/snmp:/usr/lib/x86_64-linux-gnu/snmp:/home/andrei/.snmp)
+  It's unlikely this agent can serve any useful purpose in this state.
+  Run "snmpconf -g basic_setup" to help you configure the wacssvc.conf file for this agent.
+```  
+```
+snmpconf -g basic_setup
+```
+
+#### Error opening specified endpoint "udp:161"
+
+161 привелигирпованный порт, запустить от рута.
+
+```
+sudo ./wacs --snmp 1
 ```

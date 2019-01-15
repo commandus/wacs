@@ -1,0 +1,12 @@
+#!/bin/sh
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf databaseinstance
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf starttime
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf requestcount
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorypeak 
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf memorycurrent 
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf errorcount 
+env MIBS="+ONEWAYTICKET-COMMANDUS-MIB" mib2c -c mib2c.scalar.conf ticketssold 
+cat databaseinstance.h starttime.h requestcount.h memorypeak.h memorycurrent.h errorcount.h ticketssold.h > snmpagentonewyaticket.h
+rm  databaseinstance.h starttime.h requestcount.h memorypeak.h memorycurrent.h errorcount.h ticketssold.h
+cat databaseinstance.c starttime.c requestcount.c memorypeak.c memorycurrent.c errorcount.c ticketssold.c > snmpagentonewyaticket.c
+rm  databaseinstance.c starttime.c requestcount.c memorypeak.c memorycurrent.c errorcount.c ticketssold.c

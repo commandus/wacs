@@ -1,0 +1,5 @@
+COMMANDUS-SMI-MIB DEFINITIONS ::= BEGIN
+IMPORTS  enterprises FROM SNMPv2-SMI; 
+commandus OBJECT IDENTIFIER ::= { enterprises 46821 }
+wacs OBJECT IDENTIFIER ::= { commandus 2 }
+END

@@ -1,0 +1,212 @@
+WACS-COMMANDUS-MIB DEFINITIONS ::= BEGIN
+--
+-- MIB objects for wacs service
+--
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Integer32, Unsigned32, NOTIFICATION-TYPE  FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION                        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP,
+    NOTIFICATION-GROUP                        FROM SNMPv2-CONF
+    SnmpAdminString                           FROM SNMP-FRAMEWORK-MIB
+    wacs                                      FROM COMMANDUS-SMI-MIB
+;
+
+wacsservice MODULE-IDENTITY
+    LAST-UPDATED "201901150000Z"
+    ORGANIZATION "COMMANDUS commandus.com"
+    CONTACT-INFO
+        "postal: Kirova, 13. Yakutsk, Russia
+        email: andrei.i.ivanov@commandus.com"
+    DESCRIPTION
+        "MIB objects for 
+        wacs service agent module implementation"
+    REVISION     "201901150000Z"
+    DESCRIPTION
+      "Initial release"
+    ::= { wacs 1 }
+
+Float ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "16t"
+    STATUS        current
+    DESCRIPTION
+      "Data type for reporting floating point data."
+    SYNTAX OCTET STRING (SIZE(16)) 
+
+wacsserviceConformance OBJECT IDENTIFIER ::= { wacsservice 0 }
+wacsserviceMIBCompliances OBJECT IDENTIFIER ::= {  wacsserviceConformance 1 }
+wacsserviceMIBGroups OBJECT IDENTIFIER ::= {  wacsserviceConformance 2 }
+
+--
+-- top level structure
+--
+serviceParameters              OBJECT IDENTIFIER ::= { wacsservice 1 }
+serviceState                   OBJECT IDENTIFIER ::= { wacsservice 2 }
+
+snmpGPSGroup OBJECT-GROUP
+    OBJECTS {
+        databasefilename,
+        ip,
+        port,
+        starttime,
+        requestsperhour,
+        lastmac,
+        lastssisignal,
+        totalmac,
+        databasefilesize,
+        memorypeak,
+        memorycurrent,
+        errorcount
+    }
+    STATUS  current
+    DESCRIPTION
+      "A collection of objects providing basic instrumentation and
+      control of an SNMPv2 entity."
+::= { wacsserviceMIBGroups 1 }
+
+wacsserviceMinimalCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for SNMP agents which implement
+         the minimal subset."
+    MODULE  -- this module
+    MANDATORY-GROUPS {
+        snmpGPSGroup
+    }
+    ::= { wacsserviceMIBCompliances 1 }
+
+wacsserviceFullCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for SNMP agents which implement
+         the minimal subset."
+    MODULE  -- this module
+    MANDATORY-GROUPS {
+        snmpGPSGroup
+    }
+    ::= { wacsserviceMIBCompliances 2 }
+
+--
+-- serviceParameters
+--        databasefilename  1
+--        ip                2
+--        port              3
+--        starttime         4
+--        requestsperhour   5
+--        lastmac           6
+--        lastssisignal     7
+--        totalmac          8
+--        databasefilesize  9
+--        memorypeak        10
+--        memorycurrent     11
+--        errorcount        12
+--
+databasefilename OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"database file name"
+    DEFVAL { "" }
+    ::= { serviceParameters 1 }
+
+ip OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Device interfaces"
+    DEFVAL { "" }
+    ::= { serviceParameters 2 }
+
+port OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Service start time"
+    DEFVAL { 0 }
+    ::= { serviceParameters 3 }
+
+starttime OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Service start time"
+    DEFVAL { 0 }
+    ::= { serviceParameters 4 }
+
+requestsperhour OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Requests per hour"
+    DEFVAL { 0 }
+    ::= { serviceState 5 }
+
+lastmac OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"last MAC address"
+    DEFVAL { "" }
+    ::= { serviceParameters 6 }
+
+lastssisignal OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"last signal SSI, dB"
+    DEFVAL { 0 }
+    ::= { serviceState 7 }
+
+totalmac OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Total MAC addresses count"
+    DEFVAL { 0 }
+    ::= { serviceState 8 }
+
+databasefilesize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Database file size, kB"
+    DEFVAL { 0 }
+    ::= { serviceState 9 }
+
+memorypeak OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Peak memory usage in KB"
+    DEFVAL { 0 }
+    ::= { serviceState 10 }
+
+memorycurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Current memory usage in KB"
+    DEFVAL { 0 }
+    ::= { serviceState 11 }
+
+errorcount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"Error count"
+    DEFVAL { 0 }
+    ::= { serviceState 12 }
+
+END
