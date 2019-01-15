@@ -129,7 +129,17 @@ make
 
 [libsnmp-dev](http://www.net-snmp.org/)
 
-version 5.7.3 sudo apt install libsnmp-dev snmp snmpd snmptrapd 
+version 5.7.3 
+
+```
+sudo apt install libsnmp-dev
+```
+
+or full
+
+```
+sudo apt install libsnmp-dev snmp snmpd snmptrapd 
+```
 
 ### libmdbx (LMDB clone)
 
@@ -168,10 +178,26 @@ git clone git@github.com:nanomsg/nanomsg.git
 
 ## SNMP settings
 
+#### Agent is not installed
+
+Warning: Failed to connect to the agentx master agent ([NIL]): 
+
+(SO)[https://stackoverflow.com/questions/13193471/warning-failed-to-connect-to-the-agentx-master-agent-nil]
+
+SNMP's udp:161 is priveleged port
+
+```
+udo apt install -o DPkg::options::=--force-confmiss --reinstall snmp snmpd snmptrapd
+sudo cp /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.bak
+sudo cp snmpd.conf /etc/snmp
+sudo service snmpd restart
+sudo ./wacs --snmp
+```
+
 #### Cannot find module (SNMPv2-MIB)
 
 ```
-sudo apt-get install snmp-mibs-downloader snmptrapd
+sudo apt install snmp-mibs-downloader snmptrapd
 sudo download-mibs
 sudo sed -i "s/^\(mibs *:\).*/#\1/" /etc/snmp/snmp.conf
 ```

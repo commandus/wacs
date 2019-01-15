@@ -67,6 +67,7 @@ int WacsConfig::parseCmd
 	void* argtable[] = { 
 		a_message_url,
 		a_db_path, a_flags, a_mode,
+		a_snmp_agent,
 		a_daemonize, a_max_fd, 
 		a_verbosity, a_help, a_end 
 	};

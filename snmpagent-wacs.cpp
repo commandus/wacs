@@ -1,5 +1,5 @@
 #include "snmpagent-wacs.h"
-#include "get_rss.h"
+#include "get_rss/get_rss.h"
 
 static MonitoringParams counter;
 
