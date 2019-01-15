@@ -28,6 +28,7 @@ private:
 	);
 public:
 	std::string peer;
+	std::string community;
 	int verbosity;									///< 0-quiet, 3- debug
 
 	WacsSNMPConfig();

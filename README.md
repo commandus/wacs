@@ -178,6 +178,14 @@ git clone git@github.com:nanomsg/nanomsg.git
 
 ## SNMP settings
 
+### Check 
+
+```
+./wacs-snmp  -vvv
+DB	IP	Port	Started	Elapsed	Requests/hour	MAC	SSI signal	Total MAC	DB size, kB	Mem.peak, kB	Mem.current, kB
+/home/andrei/src/wacs	127.0.0.1, 192.168.43.207, ::1, fe80::2efd:8bd8:f425:ce75	0	2019-01-15 20:59:26	0:22	0		0	0	-1	7212	7120	0
+```
+
 #### Agent is not installed
 
 Warning: Failed to connect to the agentx master agent ([NIL]): 
@@ -187,7 +195,8 @@ Warning: Failed to connect to the agentx master agent ([NIL]):
 SNMP's udp:161 is priveleged port
 
 ```
-udo apt install -o DPkg::options::=--force-confmiss --reinstall snmp snmpd snmptrapd
+sudo apt install -o DPkg::options::=--force-confmiss --reinstall snmp snmpd snmptrapd
+sudo apt install smitools
 sudo cp /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.bak
 sudo cp snmpd.conf /etc/snmp
 sudo service snmpd restart
@@ -210,16 +219,28 @@ sudo cp mib/* /root/.snmp/mib
 
 sudo /etc/init.d/snmpd stop
 
-snmptranslate -On -m +WACS-COMMANDUS-MIB -IR wacsservice
-.1.3.6.1.4.1.46821.2.1
+snmptranslate -On -m +WACS-COMMANDUS-MIB -IR wacs
+.1.3.6.1.4.1.46821.2
 
 smilint -l3  -s -p ./mib/*
 
+sudo /etc/init.d/snmpd start
 snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::totalmac.0
 WACS-COMMANDUS-MIB::totalmac.0 = INTEGER: 0
-
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::databasefilename.0
+WACS-COMMANDUS-MIB::databasefilename.0 = STRING: /home/andrei/src/wacs
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::starttime.0
+WACS-COMMANDUS-MIB::starttime.0 = INTEGER: 1547553566
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::memorypeak.0
+WACS-COMMANDUS-MIB::memorypeak.0 = INTEGER: 7212
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::memorycurrent.0
+WACS-COMMANDUS-MIB::memorypeak.0 = INTEGER: 7120
 snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::memorycurrent.0
 WACS-COMMANDUS-MIB::memorycurrent.0 = INTEGER: 29784
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::lastmac.0
+WACS-COMMANDUS-MIB::lastmac.0 = STRING:
+snmpget -v2c -c private 127.0.0.1 WACS-COMMANDUS-MIB::ip.0
+WACS-COMMANDUS-MIB::ip.0 = STRING: 127.0.0.1, 192.168.43.207, ::1, fe80::2efd:8bd8:f425:ce75
 ```
 
 #### ERROR: You don't have the SNMP perl module installed.

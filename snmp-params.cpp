@@ -2,8 +2,10 @@
 #include <fstream>
 #include "if-ip-address.h"
 
+#define DEF_FILE_NAME "mdbx.dat"
+
 MonitoringParams::MonitoringParams()
-: databasefilename(""), ip(""),
+: databasefilename(DEF_FILE_NAME), ip(""),
 	port(0), starttime(time(NULL)), requestsperhour(0), lastmac(""),
 	lastssisignal(0), totalmac(0), errorcount(0)
 {
@@ -11,7 +13,7 @@ MonitoringParams::MonitoringParams()
 
 void MonitoringParams::clear()
 {
-	databasefilename = "";
+	databasefilename = DEF_FILE_NAME;
 	ip = "";
 	port = 0;
 	starttime = time(NULL);

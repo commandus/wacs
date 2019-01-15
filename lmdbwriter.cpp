@@ -37,11 +37,13 @@ static void snmpInitialize
 )
 {
 #ifdef USE_SNMP
+	#define DEF_FILE_NAME "/mdbx.dat"
+
 	if (config)
 	{
 		config->counter = getInstance();
 		config->counter->clear();
-		config->counter->databasefilename = config->path;
+		config->counter->databasefilename = config->path + DEF_FILE_NAME;
 		if (config->snmp_agent)
 			snmpInit(snmp_name, config->snmp_agent, config->verbosity, &config->stop_request, init_mibs);
 	}

@@ -178,7 +178,7 @@ int main(int argc, char ** argv)
 	session.version = SNMP_VERSION_1;
 
 	// set the SNMPv1 community name used for authentication
-	session.community = (unsigned char*) "private";
+	session.community = (unsigned char*) config.community.c_str();
 	session.community_len = strlen((char*) session.community);
 
 	// Open the session
@@ -212,7 +212,8 @@ int main(int argc, char ** argv)
 	int64_t hours = mins / 60;
 	mins = mins - (hours * 60);
 
-	std::cout << "DB\tIP\tPort\tStarted\tElapsed\tRequests/hour\tMAC\tSSI signal\tTotal MAC\tDB size, kB\tMem.peak, kB\tMem.current, kB" << std::endl;
+	if (config.verbosity > 0)
+		std::cout << "DB\tIP\tPort\tStarted\tElapsed\tRequests/hour\tMAC\tSSI signal\tTotal MAC\tDB size, kB\tMem.peak, kB\tMem.current, kB" << std::endl;
 
 	std::cout 
 		<< db << "\t"
