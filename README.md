@@ -33,6 +33,7 @@ rsn_pairwise=CCMP
 sudo killall wpa_supplicant
 
 sudo hostapd -d /etc/hostapd.conf >>hostapd.2.log
+```
 
 ## hostapd log 
 
@@ -95,9 +96,9 @@ make
 
 ### last_probe
 
-|-------------+-------------+-------------+-------------+
++-------------+-------------+-------------+-------------+
 |  Attribute  |    Bytes    |   Key/value |    Remarks  |
-|-------------+-------------+-------------+-------------+
++-------------+-------------+-------------+-------------+
 |  tag        |      1      |   Key       | 'L'         |
 |  sa         |      6      |   Key       | MAC addr    |
 |  dt         |      4      |   Value     | seconds     |
