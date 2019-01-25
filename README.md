@@ -1,6 +1,6 @@
 # WACS
 
-[Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
+[Project Documetations](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
 
 ## hostapd config
 
