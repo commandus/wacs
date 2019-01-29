@@ -125,6 +125,20 @@ make
 
 ## Dependencies
 
+### OpenSSL
+
+```
+yum install wget tar make sudo perl which
+cd tools
+./install-openssl-1.1.0.sh
+```
+
+### microhttpd
+
+```
+sudo yum install libmicrohttpd-devel
+```
+
 ### SNMP
 
 [libsnmp-dev](http://www.net-snmp.org/)
@@ -148,10 +162,16 @@ sudo apt install libsnmp-dev snmp snmpd snmptrapd
 OpenLDAP Public License
 
 ```
-git clone git@github.com:leo-yuriev/libmdbx.git
+git clone https://github.com/leo-yuriev/libmdbx.git
 cd libmdbx
 make
 $ sudo make install
+```
+
+#### Issues
+
+```
+./wacs: error while loading shared libraries: libmdbx.so: cannot open shared object file: No such file or directory
 ```
 
 ### nanomsg IPC
@@ -161,7 +181,15 @@ $ sudo make install
 MIT/X11 license
 
 ```
-git clone git@github.com:nanomsg/nanomsg.git
+git clone https://github.com/nanomsg/nanomsg.git
+cd nanomsg
+mkdir build
+cd build
+cmake ..
+cmake --build .
+ctest .
+sudo cmake --build . --target install
+sudo ldconfig
 ```
 
 ## Test
@@ -259,8 +287,36 @@ snmpconf -g basic_setup
 
 #### Error opening specified endpoint "udp:161"
 
-161 привелигирпованный порт, запустить от рута.
+161 привелигированный порт, запустить от рута.
 
 ```
 sudo ./wacs --snmp 1
+```
+
+## docker
+
+### Initial setup
+```
+docker run -itv /home/andrei/src:/home/andrei/src centos:7.3.1611 bash
+yum install centos-release-scl devtoolset-7-gcc-c++  wget tar make sudo perl git cmake libmicrohttpd-devel autoconf automake net-snmp-devel
+scl enable devtoolset-7 bash
+
+cd /home/andrei/src/wacs
+```
+
+### Build
+
+```
+docker run -itv /home/andrei/src:/home/andrei/src centos:7.3.1611 bash
+cd /home/andrei/src/wacs
+```
+
+### закоммитить образ 
+
+```
+docker ps -a
+docker commit stoic_ramanujan
+docker images
+docker tag c30cb68a6443 centos:nova
+
 ```
