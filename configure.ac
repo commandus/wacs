@@ -31,7 +31,7 @@ AC_CHECK_HEADERS([fcntl.h limits.h stdint.h string.h sys/time.h termios.h unistd
 # AC_CHECK_LIB([crypto], [EVP_CIPHER_CTX_reset], [], AC_MSG_ERROR([Could not find openssl >= 1.1.0. Try $ ./configure LDFLAGS='-Lyour-openssl2-lib-path']))
 AC_CHECK_LIB([nanomsg], [nn_connect], [], AC_MSG_ERROR([Could not find nanomsg library. Try $ ./configure LDFLAGS='-Lyour-nanomsg-lib-path']))
 AC_CHECK_LIB([microhttpd], [MHD_start_daemon], [], AC_MSG_ERROR([Could not find microhttpd library. Try $ ./configure LDFLAGS='-Lyour-microhttpd-lib-path']))
-AC_CHECK_LIB([snmp], [snmp_log], [], AC_MSG_ERROR([Could not find SNMP library. Try $ ./configure LDFLAGS='-Lyour-snmp-lib-path']))
+# AC_CHECK_LIB([snmp], [snmp_log], [], AC_MSG_ERROR([Could not find SNMP library. Try $ ./configure LDFLAGS='-Lyour-snmp-lib-path']))
 
 # AC_CHECK_LIB(curl, curl_easy_init, [], AC_MSG_ERROR([Could not find libcurl. Try $ ./configure LDFLAGS='-Lyour-curl-lib-path']))
 

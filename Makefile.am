@@ -26,7 +26,7 @@ CLEANFILES =
 ARGT3HEADERS = third_party/argtable3/argtable3.h
 ARGT3SOURCES = third_party/argtable3/argtable3.c
 
-AM_CXXFLAGS = -std=c++11 
+AM_CXXFLAGS = 
 
 nobase_dist_include_HEADERS = \
 	platform.h log.h \
@@ -75,7 +75,7 @@ wacs_SOURCES = \
 	third_party/get_rss/get_rss.c \
 	$(common_src)
 wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg \
-	-lnetsnmp -lnetsnmpagent
+	-lnetsnmp -lnetsnmpagent -lpthread
 wacs_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
 
 #
