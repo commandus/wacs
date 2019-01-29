@@ -49,6 +49,26 @@ grep RX hostapd.log | cut -d ' ' -f 4 | cut -d '=' -f 2 | sort |  uniq
 
 [How to build](http://quadfinity.blogspot.com/2014/09/compile-latest-hostapd-v2.3-on-Raspberry-Pi-or-ODROID.html)
 
+```
+cd hostap/hostapd
+vi Makefile
+	CFLAGS +=-I/home/andrei/src/wacs
+	LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lmdbx
+
+cp defconfig .config
+sed -i 's/^#CONFIG_DRIVER_NL80211=y/CONFIG_DRIVER_NL80211=y/g' .config
+
+# enable 802.11n and 802.11ac
+sed -i 's/^#CONFIG_IEEE80211N=y/CONFIG_IEEE80211N=y/g' .config
+sed -i 's/^#CONFIG_IEEE80211AC=y/CONFIG_IEEE80211AC=y/g' .config
+
+# enable automatic channel selection
+sed -i 's/^#CONFIG_ACS=y/CONFIG_ACS=y/g' .config
+
+make && sudo make install
+```
+
+
 Note CONFIG_TLS=gnutls with openssl can not find openssl?
 
 ## hostapd changes
