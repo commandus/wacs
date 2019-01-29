@@ -26,7 +26,7 @@ void MonitoringParams::clear()
 
 size_t MonitoringParams::getDatabaseFileSize()
 {
-    std::ifstream in(databasefilename, std::ifstream::ate | std::ifstream::binary);
+    std::ifstream in(databasefilename.c_str(), std::ifstream::ate | std::ifstream::binary);
 	std::ifstream::pos_type r = in.tellg();
     return r; 
 }

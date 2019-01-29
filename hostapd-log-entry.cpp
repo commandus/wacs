@@ -1,6 +1,7 @@
 #include <netinet/in.h>
 #include <sstream>
 #include <iomanip>
+#include <stdio.h>
 #include "hostapd-log-entry.h"
 
 /**
@@ -72,7 +73,7 @@ bool strtomacaddress
 )
 {
 	unsigned int v[6];
-	int c = std::sscanf(value.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x",
+	int c = sscanf(value.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x",
 		&v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
 	uint8_t *r = (uint8_t *) retval;
 	r[0] = v[0];

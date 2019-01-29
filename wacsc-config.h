@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <inttypes.h>
 
 #define	CMD_NONE			-1
 #define	CMD_SEND_TEST		1

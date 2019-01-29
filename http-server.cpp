@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstring>
 #include <sstream>
+#include <stdio.h>
 
 #include <microhttpd.h>
 #include <stdlib.h>

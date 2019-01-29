@@ -24,7 +24,7 @@ EXPORT_C int sendLogEntryC
 	const char *message_url,
 	unsigned int device_id,	// 0..255 AP identifier
 	int ssi_signal,			// dB
-	unsigned char* sa,		// MAC address
+	const unsigned char* sa,		// MAC address
 	int repeats,
 	int verbosity
 );

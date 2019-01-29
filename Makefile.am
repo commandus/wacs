@@ -43,10 +43,9 @@ nobase_dist_include_HEADERS = \
 common_src = $(ARGT3SOURCES)
 
 wacs_lib_source = \
-	lmdbwriter.cpp NanoMessage.cpp errorcodes.cpp \
+	NanoMessage.cpp errorcodes.cpp \
 	dblog.cpp hostapd-log-entry.cpp send-log-entry.cpp \
-	utilstring.cpp \
-	snmpagent-wacs.cpp snmp-params.cpp utilsnmp.h
+	utilstring.cpp
 
 #
 #	libwpn.a

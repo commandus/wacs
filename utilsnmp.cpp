@@ -5,7 +5,7 @@
  *      Author: andrei
  */
 
-#include <thread>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,15 +21,17 @@ extern "C" {
 
 #include "utilsnmp.h"
 
-void snmpLoop
+void *snmpLoop
 (
-	bool *stopRequest
+	void *stopRequest
 )
 {
-	while(!*stopRequest)
+	while(!* (bool *)stopRequest)
 	{
 		agent_check_and_process(1); // 0 == don't block
 	}
+	pthread_exit(0);
+	return NULL;
 }
 
 int snmpInit
@@ -60,8 +62,12 @@ int snmpInit
 	  init_master_agent();        // open the port to listen on (defaults to udp:161)
 
 	*stopRequest = false;
-	std::thread t(snmpLoop, stopRequest);
-	t.detach();
+
+	pthread_t tid;
+ 	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_create(&tid, &attr, snmpLoop, stopRequest);
+	pthread_detach(tid);
 }
 
 void snmpDone
