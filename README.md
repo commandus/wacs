@@ -56,6 +56,19 @@ sudo ls /proc/20661/fd | wc -l
 
 15-20 is ok
 
+## HTTP/1.1 access
+
+```
+nohup ./wacs-http -p 55550 &
+wget http://127.0.0.1:55550/last
+[
+{"sa":"00:0c:e7:35:f8:07","dt":1548920395},
+{"sa":"00:12:36:1f:ef:de","dt":1548918644},
+{"sa":"00:26:08:fa:58:47","dt":1548921258},
+...
+
+wget http://127.0.0.1:55550/last
+```
 
 ## hostapd log 
 
