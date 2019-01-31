@@ -58,16 +58,41 @@ sudo ls /proc/20661/fd | wc -l
 
 ## HTTP/1.1 access
 
+Start HTTP server:
+
 ```
 nohup ./wacs-http -p 55550 &
+```
+
+Get list of all MAC addresses:
+
+```
 wget http://127.0.0.1:55550/last
 [
 {"sa":"00:0c:e7:35:f8:07","dt":1548920395},
 {"sa":"00:12:36:1f:ef:de","dt":1548918644},
 {"sa":"00:26:08:fa:58:47","dt":1548921258},
 ...
+```
 
-wget http://127.0.0.1:55550/last
+Get log for specified MAC address
+
+```
+wget http://84.237.104.128:55550/log?sa=ec:35:86:2f:6e:a8
+[
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917292,"device_id":1,"ssi_signal":-74},
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917299,"device_id":1,"ssi_signal":-74},
+...
+```
+
+Get log for specific MAC address between start and finish times
+
+```
+wget http://84.237.104.128:55550/log?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
+[
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917292,"device_id":1,"ssi_signal":-74},
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917299,"device_id":1,"ssi_signal":-74},
+...
 ```
 
 ## hostapd log 
