@@ -194,7 +194,7 @@ int readLog
 	LogKey key;
 	key.tag = 'L';
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
-	key.dt = be32toh(start);
+	key.dt = htobe32(start);
 #else
 	key.dt = start;
 #endif	
