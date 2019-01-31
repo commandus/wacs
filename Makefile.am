@@ -45,19 +45,19 @@ common_src = $(ARGT3SOURCES)
 wacs_lib_source = \
 	NanoMessage.cpp errorcodes.cpp \
 	hostapd-log-entry.cpp send-log-entry.cpp \
-	utilstring.cpp
+	utilstring.cpp wacs-c.cpp
 
 #
 #	libwpn.a
 #
-libwacs_a_SOURCES = $(wacs_lib_source) wacs-c.cpp
+libwacs_a_SOURCES = $(wacs_lib_source)
 libwacs_a_CPPFLAGS = $(commoncppflags)
 
 
 #
 #	libwpn.la C++ shared library
 #
-libwacs_la_SOURCES = $(wacs_lib_source) wacs-c.cpp
+libwacs_la_SOURCES = $(wacs_lib_source)
 libwacs_la_CPPFLAGS = $(commoncppflags)
 libwacs_la_LDFLAGS = -version-info 0:1:0
 
@@ -80,7 +80,7 @@ wacs_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
 #
 #	wacsc
 #
-wacsc_SOURCES= \
+wacsc_SOURCES = \
 	wacsc-config.cpp wacsc.cpp \
 	NanoMessage.cpp errorcodes.cpp \
 	dblog.cpp send-log-entry.cpp hostapd-log-entry.cpp \
@@ -92,7 +92,7 @@ wacsc_CPPFLAGS = $(commoncppflags)
 #
 #	wacs-snmp
 #
-wacs_snmp_SOURCES= \
+wacs_snmp_SOURCES = \
 	wacs-snmp-config.cpp wacs-snmp.cpp \
 	$(common_src)
 wacs_snmp_LDADD = $(commonlibs) -lnetsnmp -lnetsnmpagent
@@ -101,7 +101,7 @@ wacs_snmp_CPPFLAGS = $(commoncppflags)
 #
 #	wacs-http
 #
-wacs_http_SOURCES= \
+wacs_http_SOURCES = \
 	wacs-http.cpp wacs-http-config.cpp \
 	http-server.cpp \
 	dblog.cpp hostapd-log-entry.cpp \

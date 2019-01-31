@@ -19,9 +19,32 @@ extern "C" {
 #define EXPORT_C
 #endif
 
+EXPORT_C int openSocketLogC
+(
+	int *socket,
+	int *endpoint,
+	const char *message_url
+);
+
+EXPORT_C int closeSocketLogC
+(
+	int socket,
+	int endpoint
+);
+
 EXPORT_C int sendLogEntryC
 (
 	const char *message_url,
+	unsigned int device_id,	// 0..255 AP identifier
+	int ssi_signal,			// dB
+	const unsigned char* sa,		// MAC address
+	int repeats,
+	int verbosity
+);
+
+EXPORT_C int sendLogEntrySocketC
+(
+	int socket,
 	unsigned int device_id,	// 0..255 AP identifier
 	int ssi_signal,			// dB
 	const unsigned char* sa,		// MAC address

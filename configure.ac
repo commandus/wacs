@@ -21,7 +21,7 @@ AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 # install openssl into /usr/local/lib/opt/openssl@1.1
 LDFLAGS="$LDFLAGS -L/usr/local/lib -L/usr/local/opt/openssl@1.1/lib"
 
-# Checks for header files. Add /usr/local/include for IS X.
+# Checks for header files. Add /usr/local/include for OS X.
 CFLAGS="$CFLAGS -I/usr/local/include"
 AC_CHECK_HEADERS([openssl/ssl.h], [], AC_MSG_ERROR([Could not find openssl/ssl.h. Try $ ./configure CFLAGS='-Iyour-openssl-include-path]))
 AC_CHECK_HEADERS([nanomsg/nn.h], [], AC_MSG_ERROR([Could not find nanomsg/nn.h. Try $ ./configure CFLAGS='-Iyour-nanomsg-include-path]))

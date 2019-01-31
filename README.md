@@ -32,8 +32,30 @@ rsn_pairwise=CCMP
 
 sudo killall wpa_supplicant
 
+#Ошибка SIOCSIFFLAGS: Operation not possible due to RF-kill”?
+sudo rfkill unblock wifi; sudo rfkill unblock all
+
 sudo hostapd -d /etc/hostapd.conf >>hostapd.2.log
 ```
+
+## Patch updated
+
+При изменении библиотеки не забыть обновить либу
+
+```
+sudo cp .libs/libwacs.so.0.0.1 /usr/local/lib
+```
+
+## Tests
+
+### Checking opened file descriptor count
+
+```
+sudo ls /proc/20661/fd | wc -l
+```
+
+15-20 is ok
+
 
 ## hostapd log 
 
@@ -253,13 +275,50 @@ sudo cmake --build . --target install
 sudo ldconfig
 ```
 
-## Test
+## Collector
 
+Start collector (foregroud):
 
 ```
 ./wacs -vvv 
+Socket binded successfully to tcp://127.0.0.1:55555
+Received bytes: 10
+Received bytes: 10, MAC: ec:35:86:2f:6e:a8, device_id: 1, ssi_signal: -80
+...
+
+```
+
+Start collector (backgroud):
+
+Демон:
+
+```
+sudo ./wacs -d
+ps -ef | grep wacs
+root     22856  2011  0 15:51 ?        00:00:00 ./wacs -d
+```
+
+или
+
+```
+nohup ./wacs &
+```
+### See log
+```
+./wacsc log
+00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
+00:ec:0a:ed:5c:55	2019-01-31T15:48:50+09	1	-76
+0c:ee:e6:c6:e7:70	2019-01-31T15:48:18+09	1	-78
+12:98:6b:22:93:aa	2019-01-31T15:49:51+09	1	-74
+12:98:6b:22:93:aa	2019-01-31T15:49:52+09	1	
+...
+```
+
+### Simulate activity
+```
 ./wacsc test -vvv -d 1 -b "-54" -a "11:22:33:44:55:66" -n 5
 ```
+
 
 ```
 ./wacsc log -vvv -d 1 -a "11:22:33:44:55:66"
