@@ -171,7 +171,6 @@ static std::string lsLog
 
 	uint8_t sa[6];
 	strtomacaddress(&sa, params->sa);
-	ss << "\"" << mactostr(sa) << "\": " << params->start << " " << params->finish << " ";
 	ss << "[";
 	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, params->start, params->finish, onReqLog, (void *) &env);
 	ss << "]";
