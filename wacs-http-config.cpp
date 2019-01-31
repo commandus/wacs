@@ -90,7 +90,7 @@ int WacsHttpConfig::parseCmd
 	if (a_port->count)
 		port = *a_port->ival;
 	else
-		mode = DEF_PORT;
+		port = DEF_PORT;
 
 	if (a_db_path->count)
 		path = *a_db_path->sval;
