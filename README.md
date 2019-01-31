@@ -47,38 +47,79 @@ grep RX hostapd.log | cut -d ' ' -f 4 | cut -d '=' -f 2 | sort |  uniq
 
 ## hostapd build
 
+[hostapd](http://w1.fi/hostapd/)
+
+### Dependencies
+
+- libgnutls-dev libgcrypt20-dev (tested) or
+- OpenSSL > 1.0.0 (not working)
+
+```
+sudo apt install libgnutls-dev libgcrypt20-dev
+```
+
 [How to build](http://quadfinity.blogspot.com/2014/09/compile-latest-hostapd-v2.3-on-Raspberry-Pi-or-ODROID.html)
 
 ```
+git clone git://w1.fi/srv/git/hostap.git
+git clone http://w1.fi/hostap.git
+wget http://w1.fi/releases/hostapd-2.7.tar.gz
 cd hostap/hostapd
 vi Makefile
-	CFLAGS +=-I/home/andrei/src/wacs
-	LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lmdbx
-
+#Add lines below line 28:
+CFLAGS +=-I/home/andrei/src/wacs
+LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lnanomsg
+	
 cp defconfig .config
-sed -i 's/^#CONFIG_DRIVER_NL80211=y/CONFIG_DRIVER_NL80211=y/g' .config
 
-# enable 802.11n and 802.11ac
+Edit Makefile:
+CONFIG_TLS=gnutls
+sed -i 's/^#CONFIG_DRIVER_NL80211=y/CONFIG_DRIVER_NL80211=y/g' .config
+#enable 802.11n and 802.11ac
 sed -i 's/^#CONFIG_IEEE80211N=y/CONFIG_IEEE80211N=y/g' .config
 sed -i 's/^#CONFIG_IEEE80211AC=y/CONFIG_IEEE80211AC=y/g' .config
 
-# enable automatic channel selection
+#enable 802.11n and 802.11ac
+sed -i 's/^#CONFIG_IEEE80211N=y/CONFIG_IEEE80211N=y/g' .config
+sed -i 's/^#CONFIG_IEEE80211AC=y/CONFIG_IEEE80211AC=y/g' .config
+
+#enable automatic channel selection
 sed -i 's/^#CONFIG_ACS=y/CONFIG_ACS=y/g' .config
 
 make && sudo make install
 ```
 
-
 Note CONFIG_TLS=gnutls with openssl can not find openssl?
+
+### Check dependencies
+
+In case of error:
+
+fatal error: netlink/genl/genl.h: No such file or directory
+
+```
+apt-file search /netlink/genl/genl.h
+sudo apt install libnl-3-dev
+```
+
+In case of error:
+
+cannot find -lnl-genl-3
+
+```
+apt-file search libnl-genl-3.a
+libnl-genl-3-dev: /lib/x86_64-linux-gnu/libnl-genl-3.a
+sudo apt install libnl-genl-3-dev
+```
 
 ## hostapd changes
 
-In the git/hostap/src/drivers/driver_nl80211_event.c
+In the git/hostap/src/drivers/driver_nl80211_event.c, function mlme_event_mgmt()
 
 after line 650: 
 
 ```
-mlme_event_mgmt() -> wpa_printf()
+wpa_printf(MSG_DEBUG,
 ```
 
 add line:

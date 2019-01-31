@@ -44,7 +44,7 @@ common_src = $(ARGT3SOURCES)
 
 wacs_lib_source = \
 	NanoMessage.cpp errorcodes.cpp \
-	dblog.cpp hostapd-log-entry.cpp send-log-entry.cpp \
+	hostapd-log-entry.cpp send-log-entry.cpp \
 	utilstring.cpp
 
 #
