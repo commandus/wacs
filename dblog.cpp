@@ -142,7 +142,7 @@ int putLog
 	key.tag = 'P';
 	dbkey.mv_size = sizeof(LastProbeKey);
 	dbdata.mv_size = sizeof(key.dt); 
-	dbdata.mv_data = &key.dt;
+	dbdata.mv_data = &(key.dt);
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	if (r)
 	{
@@ -345,9 +345,9 @@ int readLastProbe
 			if (memcmp(key1.sa, sa, 6) != 0)
 				break;
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
-		key1.dt = be32toh(((LogKey*) dbkey.mv_data)->dt);
+		key1.dt = be32toh(*((time_t*) dbval.mv_data));
 #else
-		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
+		key1.dt = *((time_t*) dbval.mv_data);
 #endif	
 		if (onLog(onLogEnv, &key1, NULL))
 			break;
