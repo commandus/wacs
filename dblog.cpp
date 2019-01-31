@@ -345,7 +345,9 @@ int readLastProbe
 			if (memcmp(key1.sa, sa, 6) != 0)
 				break;
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
-		key1.dt = be32toh(key1.dt);
+		key1.dt = be32toh(((LogKey*) dbkey.mv_data)->dt);
+#else
+		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 #endif	
 		if (onLog(onLogEnv, &key1, NULL))
 			break;
