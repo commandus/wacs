@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 
+#define MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN "Access-Control-Allow-Origin"
+
 struct MHD_Daemon *mhdDaemon;
 
 const static char *MSG404 = "404 not found";
@@ -370,6 +372,7 @@ static int httpHandler
 		else
 			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
 		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
+		MHD_add_response_header(response, MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		break;
 	case RT_LAST_LOG:
 		data = lsLastProbe(env->config, &params);
@@ -378,6 +381,7 @@ static int httpHandler
 		else
 			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
 		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
+		MHD_add_response_header(response, MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		break;
 	default:
 		{
