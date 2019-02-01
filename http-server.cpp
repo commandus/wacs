@@ -19,6 +19,7 @@
 #include "log.h"
 
 #include <sys/stat.h>
+#include <linux/limits.h>
 
 struct MHD_Daemon *mhdDaemon;
 
@@ -311,12 +312,18 @@ static std::string buildFileName
 	r << dirRoot;
 	if (url)
 	{
-		r << url;
+		char resolved_path[PATH_MAX]; 
+		realpath(url, resolved_path); 
+		r << resolved_path;
 		int l = strlen(url);
 		if (l && (url[l - 1] == '/'))
 			r << "index.html";
 	}
-	return r.str();
+	std::string rr = r.str();
+	if (rr.find(dirRoot) == 0)
+		return rr;
+	else
+		return dirRoot;
 }
 
 static int httpHandler

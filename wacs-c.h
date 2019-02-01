@@ -2,7 +2,13 @@
 #define WACS_C_H_	1
 
 /**
- * C wrapper
+ * C wrapper 
+ * sendLogEntryC()- open socket to the collector (wacs), send to opened socket, close socket. 
+ * openSocketLogC() - open socket
+ * closeSocketLogC() - closesocket
+ * sendLogEntrySocketC()- send to socket
+ * for hostapd
+ * @file wacs-c.h
  */
 #ifdef __cplusplus
 extern "C" {

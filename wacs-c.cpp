@@ -27,7 +27,7 @@ EXPORT_C int sendLogEntryC
 	);
 }
 
-EXPORT_C int sendLogEntryC
+EXPORT_C int sendLogEntrySocketC
 (
 	int socket,
 	unsigned int device_id,	// 0..255 AP identifier

@@ -200,6 +200,17 @@ LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lmdbx
 Then
 
 make
+
+# TODO
+
+Now sendLogEntryC() open socket to the collector (wacs), send to opened socket, close socket. 
+
+Replace to (wacs-c.h)
+
+- openSocketLogC() - open socket
+- closeSocketLogC() - closesocket
+- sendLogEntrySocketC()- send to socket
+ 
  
 ## Database tables
 
