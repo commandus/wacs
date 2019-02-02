@@ -16,10 +16,12 @@
 #define DEF_DB_PATH					"."
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
+#define DEF_COUNT					1000
 
 WacsHttpConfig::WacsHttpConfig()
 	: errorcode(0), port(DEF_PORT), verbosity(0), 
-	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath())
+	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath()), count(0)
+
 {
 }
 	
@@ -53,6 +55,7 @@ int WacsHttpConfig::parseCmd
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
+	struct arg_int *a_count = arg_int0("c", "count", "<number>", "Default 1000");
 
 	// deamon
 	struct arg_lit *a_daemonize = arg_lit0("d", "daemonize", "Start as daemon/service");
@@ -66,6 +69,7 @@ int WacsHttpConfig::parseCmd
 	void* argtable[] = { 
 		a_root_path, a_port,
 		a_db_path, a_flags, a_mode,
+		a_count,
 		a_daemonize, a_max_fd, 
 		a_verbosity, a_help, a_end 
 	};
@@ -109,7 +113,13 @@ int WacsHttpConfig::parseCmd
 	else
 		flags = DEF_FLAGS;
 
+	if (a_count->count)
+		count = *a_count->ival;
+	else
+		count = DEF_COUNT;
+
 	daemonize = a_daemonize->count > 0;
+
 	if (a_max_fd > 0)
 		max_fd = *a_max_fd->ival;
 	else

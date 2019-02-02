@@ -48,6 +48,9 @@ public:
 	int flags;
 	int mode;
 
+	size_t offset;									///< -o
+	size_t count;									///< -c
+
 	WacscConfig();
 	WacscConfig
 	(

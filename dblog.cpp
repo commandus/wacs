@@ -161,9 +161,10 @@ int putLog
 }
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Read log data from the LMDB
  * @param env database env
  * @param sa can be NULL
+ * @param saSize can be 0
  * @param start 0- no limit
  * @param finish 0- no limit
  * @param onLog callback
@@ -172,12 +173,17 @@ int readLog
 (
 	struct dbenv *env,
 	const uint8_t *sa,			// MAC address
-	time_t start,			// time, seconds since Unix epoch 
+	int saSize,
+	time_t start,				// time, seconds since Unix epoch 
 	time_t finish,
 	OnLog onLog,
 	void *onLogEnv
 )
 {
+	if (!onLogEnv)
+		return ERRCODE_WRONG_PARAM;
+	struct ReqEnv* e = (struct ReqEnv*) onLogEnv;
+
 	if (!onLog)
 	{
 		LOG(ERROR) << ERR_WRONG_PARAM << "onLog" << std::endl;
@@ -198,11 +204,18 @@ int readLog
 #else
 	key.dt = start;
 #endif	
-
+	int sz;
+	if (saSize >= 6)
+		sz = 6;
+	else 
+		if (saSize <= 0)
+			sz = 0;
+		else
+			sz = saSize;
+		
+	memset(key.sa, 0, 6);
 	if (sa)
-		memmove(key.sa, sa, 6);
-	else
-		memset(key.sa, 0, 6);
+		memmove(key.sa, sa, sz);
 
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
@@ -243,7 +256,7 @@ int readLog
 		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 #endif	
 		if (sa)
-			if (memcmp(key1.sa, sa, 6) != 0)
+			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
 
 		if (finish > start) 
@@ -278,19 +291,25 @@ int readLog
 }
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Read last probes from the LMDB
  * @param env database env
  * @param sa can be NULL
+ * @param saSize can be 0 
  * @param onLog callback
  */
 int readLastProbe
 (
 	struct dbenv *env,
-	const uint8_t *sa,			///< MAC address
+	const uint8_t *sa,			///< MAC address filter
+	int saSize,
 	OnLog onLog,
 	void *onLogEnv
 )
 {
+	if (!onLogEnv)
+		return ERRCODE_WRONG_PARAM;
+	struct ReqEnv* e = (struct ReqEnv*) onLogEnv;
+
 	if (!onLog)
 	{
 		LOG(ERROR) << ERR_WRONG_PARAM << "onLog" << std::endl;
@@ -307,13 +326,21 @@ int readLastProbe
 	LastProbeKey key;
 	key.tag = 'P';
 
+	int sz;
+	if (saSize >= 6)
+		sz = 6;
+	else 
+		if (saSize <= 0)
+			sz = 0;
+		else
+			sz = saSize;
+
+	memset(key.sa, 0, 6);
 	if (sa)
-		memmove(key.sa, sa, 6);
-	else
-		memset(key.sa, 0, 6);
+		memmove(key.sa, sa, sz);
 
 	MDB_val dbkey;
-	dbkey.mv_size = sizeof(LastProbeKey);
+	dbkey.mv_size = sizeof(LastProbeKey) - (6 - sz);	// exclude incomplete MAC address bytes
 	dbkey.mv_data = &key;
 
 	// Get the last key
@@ -342,7 +369,7 @@ int readLastProbe
 			continue;
 		memmove(key1.sa, ((LastProbeKey*) dbkey.mv_data)->sa, 6);
 		if (sa)
-			if (memcmp(key1.sa, sa, 6) != 0)
+			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
 		key1.dt = be32toh(*((time_t*) dbval.mv_data));

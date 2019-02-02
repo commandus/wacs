@@ -21,7 +21,15 @@ static WacscConfig *config = NULL;
 
 int reslt;
 
-bool interruptFlag = false;
+struct ReqEnv
+{
+	bool interruptFlag;
+	size_t position;
+	size_t offset;
+	size_t count;
+} ReqEnv;
+
+static struct ReqEnv reqEnv;
 
 #ifdef _MSC_VER
 void setSignalHandler(int signal)
@@ -33,7 +41,7 @@ void signalHandler(int signal)
 	switch(signal)
 	{
 	case SIGINT:
-		if (interruptFlag)
+		if (reqEnv.interruptFlag)
 		{
 			if (config) 
 			{
@@ -44,7 +52,7 @@ void signalHandler(int signal)
 		else
 		{
 			std::cerr << MSG_INTERRUPTED;
-			interruptFlag = true;
+			reqEnv.interruptFlag = true;
 		}
 		break;
 	case SIGHUP:
@@ -85,8 +93,11 @@ static int sendTest
 	LogEntry value;
 	value.device_id = config->device_id;
 	value.ssi_signal = config->ssi_signal;
-	strtomacaddress(&value.sa, config->mac);
-	return sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
+	int macSize = strtomacaddress(&value.sa, config->mac);
+	if (macSize == 6)
+		return sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
+	else
+		return ERRCODE_WRONG_PARAM;
 }
 
 static bool onLog
@@ -96,6 +107,19 @@ static bool onLog
 	LogData *data
 )
 {
+	if (!env)
+		return true;
+	struct ReqEnv *e = (struct ReqEnv *) env; 
+	// paginate
+	if (e->position < e->offset)
+	{
+		e->position++;
+		return false; // skip
+	}
+	if (e->position >= e->offset + e->count)
+		return true; // all done
+	e->position++;
+
 	std::cout
 		<< mactostr(key->sa)
 		<< "\t" << time_t2string(key->dt);
@@ -104,7 +128,7 @@ static bool onLog
 			<< "\t" << data->device_id
 			<< "\t" << data->ssi_signal;
 	std::cout << std::endl;
-	return interruptFlag;
+	return e->interruptFlag;	// interrupt sigmal received
 }
 
 static int lsLog
@@ -122,8 +146,8 @@ static int lsLog
 	}
 
 	uint8_t sa[6];
-	strtomacaddress(&sa, config->mac);
-	r = readLog(&env, config->mac.empty() ? NULL : sa, config->start, config->finish, onLog, onLogEnv);
+	int macSize = strtomacaddress(&sa, config->mac);
+	r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLog, onLogEnv);
 
 	if (!closeDb(&env))
 	{
@@ -149,8 +173,8 @@ static int lsLastProbe
 	}
 
 	uint8_t sa[6];
-	strtomacaddress(&sa, config->mac);
-	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, onLog, onLogEnv);
+	int macSize = strtomacaddress(&sa, config->mac);
+	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, onLog, onLogEnv);
 
 	if (!closeDb(&env))
 	{
@@ -181,16 +205,21 @@ int main(int argc, char** argv)
 		exit(config->error());
 	}
 
+	reqEnv.interruptFlag = false;
+	reqEnv.position = 0;
+	reqEnv.offset = config->offset;
+	reqEnv.count = config->count;
+
 	switch(config->cmd)
 	{
 	case CMD_SEND_TEST:
 		reslt = sendTest(config);
 		break;
 	case CMD_LS_LOG:
-		reslt = lsLog(config, NULL);
+		reslt = lsLog(config, &reqEnv);
 		break;
 	case CMD_LS_LAST_PROBE:
-		reslt = lsLastProbe(config, NULL);
+		reslt = lsLastProbe(config, &reqEnv);
 		break;
 	default:
 		break;

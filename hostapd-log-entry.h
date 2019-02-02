@@ -51,8 +51,11 @@ std::string mactostr
 
 /**
  * string to MAC address
+ * @param retval must points to 6 bytes space
+ * @param value may be incomplete(filled with zeroes)
+ * @return 0..6. 6- all MAC address bytes has been read
  */
-bool strtomacaddress
+int strtomacaddress
 (
 	void *retval,
 	const std::string &value

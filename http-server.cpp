@@ -21,8 +21,6 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 
-#define MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN "Access-Control-Allow-Origin"
-
 struct MHD_Daemon *mhdDaemon;
 
 const static char *MSG404 = "404 not found";
@@ -36,6 +34,8 @@ const static char *CT_CSS = "text/css";
 const static char *CT_TEXT = "text/plain;charset=UTF-8";
 const static char *CT_TTF = "font/ttf";
 const static char *CT_BIN = "application/octet";
+
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 
 typedef enum
 {
@@ -54,9 +54,9 @@ static const char *PATHS[PATH_COUNT] =
 static const char* queryParamNames[] = {
 	"start",
 	"finish",
-	"sa",
-	"offset",
-	"size"
+	"sa",		// 2- MAC
+	"o",		// 3- offset
+	"c"			// 4- count
 };
 
 class RequestParams
@@ -67,7 +67,7 @@ public:
 	time_t finish;
 	std::string sa;
 	int offset;
-	int size;
+	int count;
 	RequestParams
 	(
 		struct MHD_Connection *connection,
@@ -119,6 +119,24 @@ private:
 			finish = strtol(v, NULL, 0);
 		else
 			finish = time(NULL);
+		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[3]);
+		if (v)
+		{
+			offset = strtol(v, NULL, 0);
+			if (offset < 0)
+				offset = 0;
+		}
+		else
+			offset = 0;
+		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[4]);
+		if (v)
+		{
+			count = strtol(v, NULL, 0);
+			if (count <= 0)
+				count = 0;
+		}
+		else
+			count = 0;
 	}
 
 };
@@ -133,6 +151,9 @@ struct ReqEnv
 {
 	struct dbenv *dbEnv;
 	std::stringstream *retval;
+	size_t position;
+	size_t offset;
+	size_t count;
 } ReqEnv;
 
 static bool onReqLog
@@ -145,6 +166,17 @@ static bool onReqLog
 	if (!env)
 		return true;
 	struct ReqEnv *req = (struct ReqEnv *) env;
+
+	// paginate
+	if (req->position < req->offset)
+	{
+		req->position++;
+		return false; // skip
+	}
+	if (req->position >= req->offset + req->count)
+		return true; // all done
+	req->position++;
+
 	*req->retval << "{\"sa\":\"" << mactostr(key->sa) << "\",\"dt\":" << key->dt;
 	if (data)
 		*req->retval
@@ -172,10 +204,14 @@ static std::string lsLog
 		return "";
 	}
 
+	env.position = 0;
+	env.offset = params->offset;
+	env.count = params->count == 0 ? config->count: params->count;
+	
 	uint8_t sa[6];
-	strtomacaddress(&sa, params->sa);
+	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, params->start, params->finish, onReqLog, (void *) &env);
+	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, params->start, params->finish, onReqLog, (void *) &env);
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -199,6 +235,11 @@ static std::string lsLastProbe
 	std::stringstream ss;
 	env.dbEnv = &db;
 	env.retval = &ss;
+	
+	env.position = 0;
+	env.offset = params->offset;
+	env.count = params->count == 0 ? config->count: params->count;
+
 	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -206,9 +247,9 @@ static std::string lsLastProbe
 	}
 
 	uint8_t sa[6];
-	strtomacaddress(&sa, params->sa);
+	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, onReqLog, &env);
+	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, onReqLog, &env);
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -315,8 +356,7 @@ static std::string buildFileName
 	if (url)
 	{
 		char resolved_path[PATH_MAX]; 
-		realpath(url, resolved_path); 
-		r << resolved_path;
+		r << realpath(url, resolved_path);
 		int l = strlen(url);
 		if (l && (url[l - 1] == '/'))
 			r << "index.html";
@@ -372,7 +412,7 @@ static int httpHandler
 		else
 			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
 		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
-		MHD_add_response_header(response, MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		break;
 	case RT_LAST_LOG:
 		data = lsLastProbe(env->config, &params);
@@ -381,7 +421,7 @@ static int httpHandler
 		else
 			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
 		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
-		MHD_add_response_header(response, MHD_HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		break;
 	default:
 		{

@@ -115,9 +115,10 @@ typedef bool (*OnLastProbe)
 );
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Read log data from the LMDB
  * @param env database env
  * @param sa can be NULL
+ * @param saSize can be 0 
  * @param start 0- no limit
  * @param finish 0- no limit
  * @param onLog callback
@@ -127,6 +128,7 @@ int readLog
 (
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address
+	int saSize,
 	time_t start,				///< time, seconds since Unix epoch 
 	time_t finish,
 	OnLog onLog,
@@ -134,9 +136,10 @@ int readLog
 );
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Read last probes from the LMDB
  * @param env database env
  * @param sa can be NULL
+ * @param saSize can be 0
  * @param onLog callback
  * @param onLogEnv object passed to callback
  */
@@ -144,6 +147,7 @@ int readLastProbe
 (
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address
+	int saSize,
 	OnLog onLog,
 	void *onLogEnv
 );

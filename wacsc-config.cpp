@@ -21,9 +21,12 @@
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
 
+#define DEF_COUNT			1000
+
+
 WacscConfig::WacscConfig()
 	: errorcode(0), cmd(0), verbosity(0), 
-	path(getDefaultDatabasePath())
+	path(getDefaultDatabasePath()), offset(0), count(0)
 {
 }
 	
@@ -79,6 +82,10 @@ int WacscConfig::parseCmd
 	struct arg_int *a_ssi_signal = arg_int0("b", "ssisignal", "<number>", "SSI signal");
 
 	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g. tcp://127.0.0.1:55555, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
+	
+	struct arg_int *a_offset = arg_int0("o", "offset", "<number>", "Default 0");
+	struct arg_int *a_count = arg_int0("c", "count", "<number>", "Default 1000");
+
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
@@ -91,8 +98,9 @@ int WacscConfig::parseCmd
 	void* argtable[] = { 
 		a_cmd, a_repeats,
 		a_mac, a_start, a_finish,
-		a_device_id, a_ssi_signal,
-		a_message_url, a_db_path, a_flags, a_mode,
+		a_device_id, a_ssi_signal, a_message_url, 
+		a_offset, a_count,
+		a_db_path, a_flags, a_mode,
 		a_verbosity, a_help, a_end 
 	};
 
@@ -173,6 +181,16 @@ int WacscConfig::parseCmd
 		flags = *a_flags->ival;
 	else
 		flags = DEF_FLAGS;
+
+	if (a_offset->count)
+		offset = *a_offset->ival;
+	else
+		offset = 0;
+
+	if (a_count->count)
+		count = *a_count->ival;
+	else
+		count = DEF_COUNT;
 
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)

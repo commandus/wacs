@@ -65,14 +65,17 @@ std::string mactostr
 
 /**
  * string to MAC address
+ * @param retval must points to 6 bytes space
+ * @param value may be incomplete(filled with zeroes)
+ * @return 0..6. 6- all MAC address bytes has been read
  */
-bool strtomacaddress
+int strtomacaddress
 (
 	void *retval,
 	const std::string &value
 )
 {
-	unsigned int v[6];
+	unsigned int v[6] = {0, 0, 0, 0, 0, 0};
 	int c = sscanf(value.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x",
 		&v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
 	uint8_t *r = (uint8_t *) retval;
@@ -82,4 +85,5 @@ bool strtomacaddress
 	r[3] = v[3];
 	r[4] = v[4];
 	r[5] = v[5];
+	return c;
 }

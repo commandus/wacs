@@ -75,6 +75,29 @@ wget http://127.0.0.1:55550/last
 ...
 ```
 
+Maximum record/page size is 1000.
+
+Paginate:
+
+```
+wget http://127.0.0.1:55550/last?o=0&c=10
+[
+{"sa":"00:0c:e7:35:f8:07","dt":1548920395},
+{"sa":"00:12:36:1f:ef:de","dt":1548918644},
+{"sa":"00:26:08:fa:58:47","dt":1548921258},
+...
+```
+
+Filter MAC addresses:
+
+```
+wget http://127.0.0.1:55550/last?a=00:0c
+[
+{"sa":"00:0c:e7:35:f8:07","dt":1548920395}
+]
+```
+
+
 Get log for specified MAC address
 
 ```
@@ -89,6 +112,16 @@ Get log for specific MAC address between start and finish times
 
 ```
 wget http://84.237.104.128:55550/log?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
+[
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917292,"device_id":1,"ssi_signal":-74},
+{"sa":"ec:35:86:2f:6e:a8","dt":1548917299,"device_id":1,"ssi_signal":-74},
+...
+```
+
+Paginate:
+
+```
+wget http://84.237.104.128:55550/log?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300&o=0&c=10
 [
 {"sa":"ec:35:86:2f:6e:a8","dt":1548917292,"device_id":1,"ssi_signal":-74},
 {"sa":"ec:35:86:2f:6e:a8","dt":1548917299,"device_id":1,"ssi_signal":-74},
@@ -245,7 +278,7 @@ Replace to (wacs-c.h)
 			+---------------+
 			|    IPC call   |
 			+---------------+
-			     		|
+			     		|count 
 			+---------------+
 			| wacs listener |
 			+---------------+
@@ -353,8 +386,31 @@ root     22856  2011  0 15:51 ?        00:00:00 ./wacs -d
 nohup ./wacs &
 ```
 ### See log
+
 ```
 ./wacsc log
+00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
+00:ec:0a:ed:5c:55	2019-01-31T15:48:50+09	1	-76
+0c:ee:e6:c6:e7:70	2019-01-31T15:48:18+09	1	-78
+12:98:6b:22:93:aa	2019-01-31T15:49:51+09	1	-74
+12:98:6b:22:93:aa	2019-01-31T15:49:52+09	1	
+...
+```
+
+### Filter by MAC address
+
+Provide first bytes of MAC address:
+
+```
+./wacsc log -a 00:ec
+00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
+00:ec:0a:ed:5c:55	2019-01-31T15:48:50+09	1	-76
+```
+
+### Paginate
+
+```
+./wacsc log -o 0 -c 10
 00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
 00:ec:0a:ed:5c:55	2019-01-31T15:48:50+09	1	-76
 0c:ee:e6:c6:e7:70	2019-01-31T15:48:18+09	1	-78
