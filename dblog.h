@@ -140,6 +140,8 @@ int readLog
  * @param env database env
  * @param sa can be NULL
  * @param saSize can be 0
+ * @param start 0- no limit
+ * @param finish 0- no limit
  * @param onLog callback
  * @param onLogEnv object passed to callback
  */
@@ -148,6 +150,8 @@ int readLastProbe
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
+	time_t start,				// time, seconds since Unix epoch 
+	time_t finish,
 	OnLog onLog,
 	void *onLogEnv
 );

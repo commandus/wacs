@@ -27,6 +27,7 @@ struct ReqEnv
 	size_t position;
 	size_t offset;
 	size_t count;
+	size_t sum;
 } ReqEnv;
 
 static struct ReqEnv reqEnv;
@@ -131,9 +132,24 @@ static bool onLog
 	return e->interruptFlag;	// interrupt sigmal received
 }
 
+static bool onLogCount
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	if (!env)
+		return true;
+	struct ReqEnv *e = (struct ReqEnv *) env; 
+	e->sum++;
+	return e->interruptFlag;	// interrupt sigmal received
+}
+
 static int lsLog
 (
 	WacscConfig *config,
+	OnLog onLog,
 	void *onLogEnv
 )
 {
@@ -161,6 +177,7 @@ static int lsLog
 static int lsLastProbe
 (
 	WacscConfig *config,
+	OnLog onLog,
 	void *onLogEnv
 )
 {
@@ -174,7 +191,8 @@ static int lsLastProbe
 
 	uint8_t sa[6];
 	int macSize = strtomacaddress(&sa, config->mac);
-	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, onLog, onLogEnv);
+	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, 
+		config->start, config->finish, onLog, onLogEnv);
 
 	if (!closeDb(&env))
 	{
@@ -209,6 +227,7 @@ int main(int argc, char** argv)
 	reqEnv.position = 0;
 	reqEnv.offset = config->offset;
 	reqEnv.count = config->count;
+	reqEnv.sum = 0;
 
 	switch(config->cmd)
 	{
@@ -216,10 +235,18 @@ int main(int argc, char** argv)
 		reslt = sendTest(config);
 		break;
 	case CMD_LS_LOG:
-		reslt = lsLog(config, &reqEnv);
+		reslt = lsLog(config, onLog, &reqEnv);
 		break;
 	case CMD_LS_LAST_PROBE:
-		reslt = lsLastProbe(config, &reqEnv);
+		reslt = lsLastProbe(config, onLog, &reqEnv);
+		break;
+	case CMD_COUNT_LOG:
+		reslt = lsLog(config, onLogCount, &reqEnv);
+		std::cout << reqEnv.sum << std::endl;
+		break;
+	case CMD_COUNT_LAST_PROBE:
+		reslt = lsLastProbe(config, onLogCount, &reqEnv);
+		std::cout << reqEnv.sum << std::endl;
 		break;
 	default:
 		break;

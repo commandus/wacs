@@ -55,6 +55,11 @@ static int parseCommand
 		return CMD_LS_LOG;
 	if (v == "probe")
 		return CMD_LS_LAST_PROBE;
+	if (v == "log-count")
+		return CMD_COUNT_LOG;
+	if (v == "probe-count")
+		return CMD_COUNT_LAST_PROBE;
+	
 	return CMD_NONE;
 }
 
@@ -70,7 +75,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe|log-count|probe-count");
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address

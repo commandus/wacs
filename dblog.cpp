@@ -295,6 +295,8 @@ int readLog
  * @param env database env
  * @param sa can be NULL
  * @param saSize can be 0 
+ * @param start 0- no limit
+ * @param finish 0- no limit
  * @param onLog callback
  */
 int readLastProbe
@@ -302,6 +304,8 @@ int readLastProbe
 	struct dbenv *env,
 	const uint8_t *sa,			///< MAC address filter
 	int saSize,
+	time_t start,				// time, seconds since Unix epoch 
+	time_t finish,
 	OnLog onLog,
 	void *onLogEnv
 )
@@ -376,6 +380,16 @@ int readLastProbe
 #else
 		key1.dt = *((time_t*) dbval.mv_data);
 #endif	
+		if (finish > start) 
+		{
+			if ((key1.dt > finish) || (key1.dt < start))
+				continue;
+		}
+		else
+		{
+			if ((key1.dt < finish) || (key1.dt > start))
+				continue;
+		}
 		if (onLog(onLogEnv, &key1, NULL))
 			break;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);

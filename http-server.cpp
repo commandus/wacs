@@ -39,16 +39,20 @@ const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-All
 
 typedef enum
 {
-	RT_LOG = 0,			//< List of coordinates
-	RT_LAST_LOG = 1,	//< List of device and their states
-	RT_UNKNOWN = 100	//< file request
+	RT_LOG = 0,				//< List of coordinates
+	RT_LAST_LOG = 1,		//< List of device and their states
+	RT_LOG_COUNT = 2,		//< List of coordinates
+	RT_LAST_LOG_COUNT = 3,	//< List of device and their states
+	RT_UNKNOWN = 100		//< file request
 } RequestType;
 
-#define PATH_COUNT 2
+#define PATH_COUNT 4
 static const char *PATHS[PATH_COUNT] = 
 {
 	"/log",
-	"/last"
+	"/last",
+	"/log-count",
+	"/last-count"
 };
 
 static const char* queryParamNames[] = {
@@ -151,6 +155,7 @@ struct ReqEnv
 {
 	struct dbenv *dbEnv;
 	std::stringstream *retval;
+	int sum;
 	size_t position;
 	size_t offset;
 	size_t count;
@@ -187,10 +192,25 @@ static bool onReqLog
 	return false;
 }
 
+static bool onReqLogCount
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	if (!env)
+		return true;
+	struct ReqEnv *req = (struct ReqEnv *) env;
+	req->sum++;
+	return false;
+}
+
 static std::string lsLog
 (
 	const WacsHttpConfig *config,
-	const RequestParams *params
+	const RequestParams *params,
+	OnLog onLog
 )
 {
 	struct ReqEnv env;
@@ -207,11 +227,15 @@ static std::string lsLog
 	env.position = 0;
 	env.offset = params->offset;
 	env.count = params->count == 0 ? config->count: params->count;
-	
+	env.sum = 0;
+
 	uint8_t sa[6];
 	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, params->start, params->finish, onReqLog, (void *) &env);
+	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+		params->start, params->finish, onLog, (void *) &env);
+	if (env.sum)
+		ss << env.sum << ",";
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -227,7 +251,8 @@ static std::string lsLog
 static std::string lsLastProbe
 (
 	const WacsHttpConfig *config,
-	const RequestParams *params
+	const RequestParams *params,
+	OnLog onLog
 )
 {
 	struct ReqEnv env;
@@ -239,6 +264,7 @@ static std::string lsLastProbe
 	env.position = 0;
 	env.offset = params->offset;
 	env.count = params->count == 0 ? config->count: params->count;
+	env.sum = 0;
 
 	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
 	{
@@ -249,7 +275,10 @@ static std::string lsLastProbe
 	uint8_t sa[6];
 	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, onReqLog, &env);
+	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+		params->start, params->finish, onLog, &env);
+	if (env.sum)
+		ss << env.sum << ",";
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -406,22 +435,16 @@ static int httpHandler
 	switch (params.requestType)
 	{
 	case RT_LOG:
-		data = lsLog(env->config, &params);
-		if (data.empty())
-			response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
-		else
-			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
-		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
-		MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		data = lsLog(env->config, &params, onReqLog);
 		break;
 	case RT_LAST_LOG:
-		data = lsLastProbe(env->config, &params);
-		if (data.empty())
-			response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
-		else
-			response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
-		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
-		MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		data = lsLastProbe(env->config, &params, onReqLog);
+		break;
+	case RT_LOG_COUNT:
+		data = lsLog(env->config, &params, onReqLogCount);
+		break;
+	case RT_LAST_LOG_COUNT:
+		data = lsLastProbe(env->config, &params, onReqLogCount);
 		break;
 	default:
 		{
@@ -429,6 +452,14 @@ static int httpHandler
 			return processFile(connection, fn);
 		}
 	};
+
+	if (data.empty())
+		response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
+	else
+		response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
+	MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
+	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+
 	ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
 	MHD_destroy_response(response);
 	return ret;

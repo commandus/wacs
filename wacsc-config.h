@@ -10,10 +10,13 @@
 #include <vector>
 #include <inttypes.h>
 
-#define	CMD_NONE			-1
-#define	CMD_SEND_TEST		1
-#define	CMD_LS_LOG			2
-#define	CMD_LS_LAST_PROBE	3
+#define	CMD_NONE				-1
+#define	CMD_SEND_TEST			1
+#define	CMD_LS_LOG				2
+#define	CMD_LS_LAST_PROBE		3
+#define	CMD_COUNT_LOG			4
+#define	CMD_COUNT_LAST_PROBE	5
+
 
 /**
  * Command line interface (CLI) tool configuration structure

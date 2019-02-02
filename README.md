@@ -128,6 +128,26 @@ wget http://84.237.104.128:55550/log?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300&o=0&c
 ...
 ```
 
+Count log:
+
+```
+wget http://84.237.104.128:55550/log-count?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
+[744 ]
+```
+
+Count last:
+
+```
+wget http://84.237.104.128:55550/last-count?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
+[1744 ]
+```
+
+Valid filter options:
+
+- sa
+- start
+- finish
+
 ## hostapd log 
 
 grep MAC address
@@ -418,6 +438,21 @@ Provide first bytes of MAC address:
 12:98:6b:22:93:aa	2019-01-31T15:49:52+09	1	
 ...
 ```
+
+### Count log and probes
+
+```
+./wacsc probe-count
+744
+./wacsc log-count
+3185
+```
+
+Valid filter options:
+
+- sa
+- start
+- finish
 
 ### Simulate activity
 ```
