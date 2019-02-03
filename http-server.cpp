@@ -56,8 +56,8 @@ static const char *PATHS[PATH_COUNT] =
 };
 
 static const char* queryParamNames[] = {
-	"start",
-	"finish",
+	"s",		// 0- start
+	"f",		// 1- finish
 	"sa",		// 2- MAC
 	"o",		// 3- offset
 	"c"			// 4- count
