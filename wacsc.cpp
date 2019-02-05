@@ -16,6 +16,7 @@
 #include "dblog.h"
 #include "errorcodes.h"
 #include "send-log-entry.h"
+#include "histogrammacspertime.h"
 
 static WacscConfig *config = NULL;
 
@@ -146,6 +147,20 @@ static bool onLogCount
 	return e->interruptFlag;	// interrupt sigmal received
 }
 
+static bool onLogHistogram
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	if (!env)
+		return true;
+	HistogramMacsPerTime *h = (HistogramMacsPerTime *) env; 
+	h->put(key->dt, key->sa);
+	return reqEnv.interruptFlag;
+}
+
 static int lsLog
 (
 	WacscConfig *config,
@@ -203,6 +218,33 @@ static int lsLastProbe
 	return r;
 }
 
+static int macsPerTime
+(
+	HistogramMacsPerTime *retval,
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	int r = 0;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	uint8_t sa[6];
+	int macSize = strtomacaddress(&sa, config->mac);
+	r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLogHistogram, retval);
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		r = ERRCODE_LMDB_CLOSE;
+	}
+
+	return r;
+}
+
 int main(int argc, char** argv)
 {
 	// Signal handler
@@ -247,6 +289,13 @@ int main(int argc, char** argv)
 	case CMD_COUNT_LAST_PROBE:
 		reslt = lsLastProbe(config, onLogCount, &reqEnv);
 		std::cout << reqEnv.sum << std::endl;
+		break;
+	case CMD_MACS_PER_TIME:
+		{
+			HistogramMacsPerTime reslt(config->start, config->finish, config->step_seconds);
+			macsPerTime(&reslt, config);
+			std::cout << reslt.toString() << std::endl;
+		}
 		break;
 	default:
 		break;

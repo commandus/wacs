@@ -37,7 +37,7 @@ nobase_dist_include_HEADERS = \
 	snmpagent-wacs.h snmp-params.h utilsnmp.h \
 	wacs-snmp-config.h \
 	third_party/get_rss/get_rss.h \
-	if-ip-address.h \
+	if-ip-address.h histogrammacspertime.h \
 	$(ARGT3HEADERS)
 
 common_src = $(ARGT3SOURCES)
@@ -85,6 +85,7 @@ wacsc_SOURCES = \
 	NanoMessage.cpp errorcodes.cpp \
 	dblog.cpp send-log-entry.cpp hostapd-log-entry.cpp \
 	utilstring.cpp \
+	histogrammacspertime.cpp \
 	$(common_src)
 wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
 wacsc_CPPFLAGS = $(commoncppflags)
@@ -106,6 +107,7 @@ wacs_http_SOURCES = \
 	http-server.cpp \
 	dblog.cpp hostapd-log-entry.cpp \
 	utilstring.cpp daemonize.cpp \
+	histogrammacspertime.cpp \
 	$(common_src)
 wacs_http_LDADD = $(commonlibs) -lmicrohttpd -lmdbx
 wacs_http_CPPFLAGS = $(commoncppflags)

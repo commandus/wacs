@@ -16,6 +16,7 @@
 #define	CMD_LS_LAST_PROBE		3
 #define	CMD_COUNT_LOG			4
 #define	CMD_COUNT_LAST_PROBE	5
+#define	CMD_MACS_PER_TIME		6
 
 
 /**
@@ -53,6 +54,8 @@ public:
 
 	size_t offset;									///< -o
 	size_t count;									///< -c
+
+	int step_seconds;								///< --step
 
 	WacscConfig();
 	WacscConfig

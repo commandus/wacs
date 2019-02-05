@@ -148,6 +148,16 @@ Valid filter options:
 - start
 - finish
 
+Histogram:
+
+```
+wget http://84.237.104.128:55550/last-count?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
+http://localhost:55550/macs-per-time?step=60
+[{"t": 1548917280,"c": 44},
+{"t": 1548917340,"c": 40},
+...
+```
+
 ## hostapd log 
 
 grep MAC address
@@ -453,6 +463,18 @@ Valid filter options:
 - sa
 - start
 - finish
+
+### Histogram
+
+```
+./wacsc macs-per-time --start 2019-01-31T00:00:00 --step 60
+2019-01-31T15:48:00+09	44
+2019-01-31T15:49:00+09	40
+2019-01-31T15:50:00+09	40
+2019-01-31T15:51:00+09	62
+2019-01-31T15:52:00+09	81
+...
+```
 
 ### Simulate activity
 ```

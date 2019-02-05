@@ -21,7 +21,7 @@
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
 
-#define DEF_COUNT			1000
+#define DEF_COUNT					1000
 
 
 WacscConfig::WacscConfig()
@@ -59,6 +59,8 @@ static int parseCommand
 		return CMD_COUNT_LOG;
 	if (v == "probe-count")
 		return CMD_COUNT_LAST_PROBE;
+	if (v == "macs-per-time")
+		return CMD_MACS_PER_TIME;
 	
 	return CMD_NONE;
 }
@@ -75,7 +77,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe|log-count|probe-count");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe|log-count|probe-count|macs-per-time");
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
@@ -94,6 +96,8 @@ int WacscConfig::parseCmd
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
+	
+	struct arg_int *a_step_seconds = arg_int0(NULL, "step", "<seconds>", "Valid with command macs-per-time. Default 1");
 
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
@@ -106,6 +110,7 @@ int WacscConfig::parseCmd
 		a_device_id, a_ssi_signal, a_message_url, 
 		a_offset, a_count,
 		a_db_path, a_flags, a_mode,
+		a_step_seconds,
 		a_verbosity, a_help, a_end 
 	};
 
@@ -161,6 +166,12 @@ int WacscConfig::parseCmd
 		device_id = *a_device_id->ival;
 	else
 		device_id = 0;
+
+	if (a_step_seconds->count)
+		step_seconds = *a_step_seconds->ival;
+	else
+		step_seconds = 1;
+
 	if (a_ssi_signal->count)
 		ssi_signal = *a_ssi_signal->ival;
 	else

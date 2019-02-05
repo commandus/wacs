@@ -11,15 +11,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/stat.h>
+#include <linux/limits.h>
+
 #include "errorcodes.h"
 #include "http-server.h"
 #include "send-log-entry.h"
 
 #include "dblog.h"
 #include "log.h"
-
-#include <sys/stat.h>
-#include <linux/limits.h>
+#include "histogrammacspertime.h"
 
 struct MHD_Daemon *mhdDaemon;
 
@@ -43,16 +44,18 @@ typedef enum
 	RT_LAST_LOG = 1,		//< List of device and their states
 	RT_LOG_COUNT = 2,		//< List of coordinates
 	RT_LAST_LOG_COUNT = 3,	//< List of device and their states
+	RT_MACS_PER_TIME = 4,	//< Histogram
 	RT_UNKNOWN = 100		//< file request
 } RequestType;
 
-#define PATH_COUNT 4
+#define PATH_COUNT 5
 static const char *PATHS[PATH_COUNT] = 
 {
 	"/log",
 	"/last",
 	"/log-count",
-	"/last-count"
+	"/last-count",
+	"/macs-per-time"
 };
 
 static const char* queryParamNames[] = {
@@ -60,7 +63,8 @@ static const char* queryParamNames[] = {
 	"f",		// 1- finish
 	"sa",		// 2- MAC
 	"o",		// 3- offset
-	"c"			// 4- count
+	"c",		// 4- count
+	"step"		// 5- step in seconds for "macs-per-time" path
 };
 
 class RequestParams
@@ -72,6 +76,7 @@ public:
 	std::string sa;
 	int offset;
 	int count;
+	int step;
 	RequestParams
 	(
 		struct MHD_Connection *connection,
@@ -141,6 +146,15 @@ private:
 		}
 		else
 			count = 0;
+		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[5]);
+		if (v)
+		{
+			step = strtol(v, NULL, 0);
+			if (step <= 0)
+				step = 1;
+		}
+		else
+			step = 1;
 	}
 
 };
@@ -246,6 +260,47 @@ static std::string lsLog
 	if (r.size() > 2)
 		r[r.size() - 2] = ' ';	// remove last ','
 	return r;
+}
+
+static bool onLogHistogram
+(
+	void *env,
+	LogKey *key,
+	LogData *data
+)
+{
+	if (!env)
+		return true;
+	HistogramMacsPerTime *h = (HistogramMacsPerTime *) env; 
+	h->put(key->dt, key->sa);
+	return false;
+}
+
+static int macsPerTime(
+	HistogramMacsPerTime *retval,
+	const WacsHttpConfig *config,
+	const RequestParams *params
+)
+{
+	struct dbenv db;
+	if (!openDb(&db, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	uint8_t sa[6];
+	int macSize = strtomacaddress(&sa, params->sa);
+
+	readLog(&db, params->sa.empty() ? NULL : sa, macSize, 
+		params->start, params->finish, onLogHistogram, retval);
+
+	if (!closeDb(&db))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return ERRCODE_LMDB_CLOSE;
+	}
+	return 0;
 }
 
 static std::string lsLastProbe
@@ -445,6 +500,15 @@ static int httpHandler
 		break;
 	case RT_LAST_LOG_COUNT:
 		data = lsLastProbe(env->config, &params, onReqLogCount);
+		break;
+	case RT_MACS_PER_TIME:
+		{
+			HistogramMacsPerTime histogram(params.start, params.finish, params.step);
+			if (macsPerTime(&histogram, env->config, &params))
+				data = "Error";
+			else
+				data = histogram.toJSON();
+		}
 		break;
 	default:
 		{
