@@ -271,6 +271,12 @@ int main(int argc, char** argv)
 	reqEnv.count = config->count;
 	reqEnv.sum = 0;
 
+	if (config->verbosity > 2)
+		std::cerr << "start: " << config->start
+		<< ", finish: " << config->finish
+		<< ", step: " << config->step_seconds
+		<< std::endl;
+
 	switch(config->cmd)
 	{
 	case CMD_SEND_TEST:

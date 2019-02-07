@@ -151,8 +151,8 @@ Valid filter options:
 Histogram:
 
 ```
-wget http://84.237.104.128:55550/last-count?sa=ec:35:86:2f:6e:a8&s=0&f=1548917300
-http://localhost:55550/macs-per-time?step=60
+wget http://localhost:55550/macs-per-time?step=60
+
 [{"t": 1548917280,"c": 44},
 {"t": 1548917340,"c": 40},
 ...
