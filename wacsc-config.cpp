@@ -21,7 +21,7 @@
 #define DEF_MODE					0664
 #define DEF_FLAGS					0
 
-#define DEF_COUNT					1000
+#define DEF_COUNT					-1
 
 
 WacscConfig::WacscConfig()
@@ -81,7 +81,7 @@ int WacscConfig::parseCmd
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
-	struct arg_str *a_mac = arg_str0("a", "sa", "<MAC>", "MAC address");
+	struct arg_str *a_mac = arg_strn(NULL, NULL, "<MAC>", 0, 1024, "MAC address");
 	struct arg_str *a_start = arg_str0(NULL, "start", "<local time>", "e.g. 2019-01-01T00:00:00 or 1546300800 (GMT Unix seconds)");
 	struct arg_str *a_finish = arg_str0(NULL, "finish", "<local time>", "e.g. 2019-12-31T23:59:59 or 1577836799. Default now.");
 
@@ -91,7 +91,7 @@ int WacscConfig::parseCmd
 	struct arg_str *a_message_url = arg_str0("i", "input", "<queue url>", "e.g. tcp://127.0.0.1:55555, ws://127.0.0.1:2019, ipc://tmp/wacs.nn. Default " DEF_QUEUE);
 	
 	struct arg_int *a_offset = arg_int0("o", "offset", "<number>", "Default 0");
-	struct arg_int *a_count = arg_int0("c", "count", "<number>", "Default 1000");
+	struct arg_int *a_count = arg_int0("c", "count", "<number>", "Default none");
 
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
@@ -149,10 +149,10 @@ int WacscConfig::parseCmd
 		nerrors++;
 	}
 
-	if (a_mac->count)
-		mac = std::string(*a_mac->sval);
-	else
-		mac = "";
+	for (int i = 0; i < a_mac->count; i++)
+	{
+		mac.push_back(a_mac->sval[i]);
+	}
 
 	if (a_start->count)
 		start = parseDate(*a_start->sval);

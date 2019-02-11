@@ -41,7 +41,7 @@ public:
 	std::string message_url;
 	int cmd;										///< CMD_*
 	int repeats;
-	std::string mac;								///< MAC address
+	std::vector<std::string> mac;					///< MAC addresses
 	time_t start;
 	time_t finish;
 	uint16_t device_id;
@@ -53,7 +53,7 @@ public:
 	int mode;
 
 	size_t offset;									///< -o
-	size_t count;									///< -c
+	int count;										///< -c. -1 - unlimited
 
 	int step_seconds;								///< --step
 

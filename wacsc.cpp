@@ -95,11 +95,16 @@ static int sendTest
 	LogEntry value;
 	value.device_id = config->device_id;
 	value.ssi_signal = config->ssi_signal;
-	int macSize = strtomacaddress(&value.sa, config->mac);
-	if (macSize == 6)
-		return sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
-	else
-		return ERRCODE_WRONG_PARAM;
+	int r;
+	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		int macSize = strtomacaddress(&value.sa, *it);
+		if (macSize == 6)
+			r = sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
+		else
+			return ERRCODE_WRONG_PARAM;
+	}
+	return r;
 }
 
 static bool onLog
@@ -176,16 +181,17 @@ static int lsLog
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, config->mac);
-	r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLog, onLogEnv);
-
+	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLog, onLogEnv);
+	}
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
 		r = ERRCODE_LMDB_CLOSE;
 	}
-
 	return r;
 }
 
@@ -204,17 +210,19 @@ static int lsLastProbe
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, config->mac);
-	r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, 
-		config->start, config->finish, onLog, onLogEnv);
+	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, 
+			config->start, config->finish, onLog, onLogEnv);
+	}
 
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
 		r = ERRCODE_LMDB_CLOSE;
 	}
-
 	return r;
 }
 
@@ -232,14 +240,17 @@ static int macsPerTime
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, config->mac);
-	r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLogHistogram, retval);
-
-	if (!closeDb(&env))
+	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
 	{
-		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-		r = ERRCODE_LMDB_CLOSE;
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLogHistogram, retval);
+
+		if (!closeDb(&env))
+		{
+			std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+			r = ERRCODE_LMDB_CLOSE;
+		}
 	}
 
 	return r;

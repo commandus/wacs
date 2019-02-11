@@ -64,6 +64,9 @@ int closeSocketLog
 	return r;
 }
 
+/**
+ * @return 0- success
+ */
 int sendLogEntry
 (
 	const std::string &message_url,
@@ -84,6 +87,9 @@ int sendLogEntry
 	return closeSocketLog(write_socket, eid);
 }
 
+/**
+ * @return 0- success
+ */
 int sendLogEntrySocket
 (
 	int socket,

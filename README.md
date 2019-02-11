@@ -1,5 +1,9 @@
 # WACS
 
+## History
+
+20190211 wacsc: option --sa removed
+
 [Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
 
 ## hostapd config
@@ -432,7 +436,7 @@ nohup ./wacs &
 Provide first bytes of MAC address:
 
 ```
-./wacsc log -a 00:ec
+./wacsc log 00:ec
 00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
 00:ec:0a:ed:5c:55	2019-01-31T15:48:50+09	1	-76
 ```
@@ -478,12 +482,12 @@ Valid filter options:
 
 ### Simulate activity
 ```
-./wacsc test -vvv -d 1 -b "-54" -a "11:22:33:44:55:66" -n 5
+./wacsc test -vvv -d 1 -b "-54" -n 5 "11:22:33:44:55:66"
 ```
 
 
 ```
-./wacsc log -vvv -d 1 -a "11:22:33:44:55:66"
+./wacsc log -vvv -d 1 "11:22:33:44:55:66"
 ```
 
 ## SNMP settings
