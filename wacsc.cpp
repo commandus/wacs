@@ -180,7 +180,6 @@ static int lsLog
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
 	}
-
 	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
 	{
 		uint8_t sa[6];
@@ -209,7 +208,6 @@ static int lsLastProbe
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
 	}
-
 	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
 	{
 		uint8_t sa[6];
@@ -217,7 +215,6 @@ static int lsLastProbe
 		r = readLastProbe(&env, config->mac.empty() ? NULL : sa, macSize, 
 			config->start, config->finish, onLog, onLogEnv);
 	}
-
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
@@ -239,18 +236,16 @@ static int macsPerTime
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
 	}
-
 	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
 		r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLogHistogram, retval);
-
-		if (!closeDb(&env))
-		{
-			std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-			r = ERRCODE_LMDB_CLOSE;
-		}
+	}
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		r = ERRCODE_LMDB_CLOSE;
 	}
 
 	return r;
