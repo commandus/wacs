@@ -67,7 +67,8 @@ static const char* queryParamNames[] = {
 	"step"		// 5- step in seconds for "macs-per-time" path
 };
 
-static int callbackArg(
+static int callbackArg
+(
 	void *requestParams, 
 	enum MHD_ValueKind kind,
 	const char *key,
@@ -129,6 +130,8 @@ private:
 		step = 1;
 		// read arguments
 		MHD_get_connection_values(connection, MHD_GET_ARGUMENT_KIND, callbackArg, this);
+		if (sa.size() == 0)
+			sa.push_back("");
 	}
 };
 
@@ -142,17 +145,17 @@ static int callbackArg(
 	RequestParams *rp = (RequestParams *) requestParams;
 	if ((key == NULL) || (value == NULL))
 		return MHD_YES;
-	else if (strcmp(queryParamNames[0], key))
+	else if (strcmp(queryParamNames[0], key) == 0)
 		rp->start = strtol(value, NULL, 0);
-	else if (strcmp(queryParamNames[1], key))
+	else if (strcmp(queryParamNames[1], key) == 0)
 		rp->finish = strtol(value, NULL, 0);
-	else if (strcmp(queryParamNames[2], key))
+	else if (strcmp(queryParamNames[2], key) == 0)
 		rp->sa.push_back(value);
-	else if (strcmp(queryParamNames[3], key))
+	else if (strcmp(queryParamNames[3], key) == 0)
 		rp->offset = strtol(value, NULL, 0);
-	else if (strcmp(queryParamNames[4], key))
+	else if (strcmp(queryParamNames[4], key) == 0)
 		rp->count = strtol(value, NULL, 0);
-	else if (strcmp(queryParamNames[5], key))
+	else if (strcmp(queryParamNames[5], key) == 0)
 		rp->step= strtol(value, NULL, 0);
 	return MHD_YES;
 }
@@ -246,7 +249,7 @@ static std::string lsLog
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
-		readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+		readLog(env.dbEnv, macSize <= 0 ? NULL : sa, macSize, 
 			params->start, params->finish, onLog, (void *) &env);
 		if (env.sum)
 			ss << env.sum << ",";
@@ -294,7 +297,7 @@ static int macsPerTime(
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
-		readLog(&db, params->sa.empty() ? NULL : sa, macSize, 
+		readLog(&db, macSize <= 0 ? NULL : sa, macSize, 
 			params->start, params->finish, onLogHistogram, retval);
 	}
 	if (!closeDb(&db))
@@ -334,7 +337,7 @@ static std::string lsLastProbe
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
-		readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+		readLastProbe(env.dbEnv, macSize <= 0 ? NULL : sa, macSize, 
 			params->start, params->finish, onLog, &env);
 		if (env.sum)
 			ss << env.sum << ",";

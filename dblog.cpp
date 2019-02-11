@@ -340,9 +340,8 @@ int readLastProbe
 			sz = saSize;
 
 	memset(key.sa, 0, 6);
-	if (sa)
+	if (sa && (sz > 0))
 		memmove(key.sa, sa, sz);
-
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LastProbeKey) - (6 - sz);	// exclude incomplete MAC address bytes
 	dbkey.mv_data = &key;
@@ -373,8 +372,10 @@ int readLastProbe
 			continue;
 		memmove(key1.sa, ((LastProbeKey*) dbkey.mv_data)->sa, 6);
 		if (sa)
+		{
 			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
+		}
 #if __BYTE_ORDER == __LITTLE_ENDIAN	
 		key1.dt = be32toh(*((time_t*) dbval.mv_data));
 #else
