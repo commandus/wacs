@@ -67,13 +67,20 @@ static const char* queryParamNames[] = {
 	"step"		// 5- step in seconds for "macs-per-time" path
 };
 
+static int callbackArg(
+	void *requestParams, 
+	enum MHD_ValueKind kind,
+	const char *key,
+	const char *value
+);
+
 class RequestParams
 {
 public:
 	RequestType requestType;
 	time_t start;
 	time_t finish;
-	std::string sa;
+	std::vector<std::string> sa;
 	int offset;
 	int count;
 	int step;
@@ -113,51 +120,42 @@ private:
 		struct MHD_Connection *connection
 	)
 	{
-		const char *v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[2]);
-		if (v)
-			sa = v;
-		else
-			sa = "";
-		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[0]);
-		if (v)
-			start = strtol(v, NULL, 0);
-		else
-			start = 0;
-		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[1]);
-		if (v)
-			finish = strtol(v, NULL, 0);
-		else
-			finish = time(NULL);
-		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[3]);
-		if (v)
-		{
-			offset = strtol(v, NULL, 0);
-			if (offset < 0)
-				offset = 0;
-		}
-		else
-			offset = 0;
-		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[4]);
-		if (v)
-		{
-			count = strtol(v, NULL, 0);
-			if (count <= 0)
-				count = 0;
-		}
-		else
-			count = 0;
-		v = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, queryParamNames[5]);
-		if (v)
-		{
-			step = strtol(v, NULL, 0);
-			if (step <= 0)
-				step = 1;
-		}
-		else
-			step = 1;
+		// set defaults
+		sa.clear();
+		start = 0;
+		finish = time(NULL);
+		offset = 0;
+		count = 0;
+		step = 1;
+		// read arguments
+		MHD_get_connection_values(connection, MHD_GET_ARGUMENT_KIND, callbackArg, this);
 	}
-
 };
+
+static int callbackArg(
+	void *requestParams, 
+	enum MHD_ValueKind kind,
+	const char *key,
+	const char *value
+)
+{
+	RequestParams *rp = (RequestParams *) requestParams;
+	if ((key == NULL) || (value == NULL))
+		return MHD_YES;
+	else if (strcmp(queryParamNames[0], key))
+		rp->start = strtol(value, NULL, 0);
+	else if (strcmp(queryParamNames[1], key))
+		rp->finish = strtol(value, NULL, 0);
+	else if (strcmp(queryParamNames[2], key))
+		rp->sa.push_back(value);
+	else if (strcmp(queryParamNames[3], key))
+		rp->offset = strtol(value, NULL, 0);
+	else if (strcmp(queryParamNames[4], key))
+		rp->count = strtol(value, NULL, 0);
+	else if (strcmp(queryParamNames[5], key))
+		rp->step= strtol(value, NULL, 0);
+	return MHD_YES;
+}
 
 class HttpEnv
 {
@@ -243,13 +241,16 @@ static std::string lsLog
 	env.count = params->count == 0 ? config->count: params->count;
 	env.sum = 0;
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
-		params->start, params->finish, onLog, (void *) &env);
-	if (env.sum)
-		ss << env.sum << ",";
+	for (std::vector<std::string>::const_iterator it (params->sa.begin()); it != params->sa.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		readLog(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+			params->start, params->finish, onLog, (void *) &env);
+		if (env.sum)
+			ss << env.sum << ",";
+	}
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
@@ -289,12 +290,13 @@ static int macsPerTime(
 		return ERRCODE_LMDB_OPEN;
 	}
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, params->sa);
-
-	readLog(&db, params->sa.empty() ? NULL : sa, macSize, 
-		params->start, params->finish, onLogHistogram, retval);
-
+	for (std::vector<std::string>::const_iterator it (params->sa.begin()); it != params->sa.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		readLog(&db, params->sa.empty() ? NULL : sa, macSize, 
+			params->start, params->finish, onLogHistogram, retval);
+	}
 	if (!closeDb(&db))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
@@ -327,13 +329,16 @@ static std::string lsLastProbe
 		return "";
 	}
 
-	uint8_t sa[6];
-	int macSize = strtomacaddress(&sa, params->sa);
 	ss << "[";
-	readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
-		params->start, params->finish, onLog, &env);
-	if (env.sum)
-		ss << env.sum << ",";
+	for (std::vector<std::string>::const_iterator it (params->sa.begin()); it != params->sa.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		readLastProbe(env.dbEnv, params->sa.empty() ? NULL : sa, macSize, 
+			params->start, params->finish, onLog, &env);
+		if (env.sum)
+			ss << env.sum << ",";
+	}
 	ss << "]";
 	if (!closeDb(env.dbEnv))
 	{
