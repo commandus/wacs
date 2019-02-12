@@ -153,6 +153,8 @@ int WacscConfig::parseCmd
 	{
 		mac.push_back(a_mac->sval[i]);
 	}
+	if (mac.size() == 0)
+		mac.push_back("");
 
 	if (a_start->count)
 		start = parseDate(*a_start->sval);

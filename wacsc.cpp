@@ -123,7 +123,7 @@ static bool onLog
 		e->position++;
 		return false; // skip
 	}
-	if (e->position >= e->offset + e->count)
+	if ((e->count != -1) && (e->position >= e->offset + e->count))
 		return true; // all done
 	e->position++;
 

@@ -1,5 +1,9 @@
 SUBDIRS = .
 
+# Uncomment for debug
+CFLAGS=-g -O0
+CXXFLAGS=-g -O0
+
 ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
