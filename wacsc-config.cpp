@@ -101,8 +101,7 @@ int WacscConfig::parseCmd
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
 	
 	struct arg_int *a_step_seconds = arg_int0(NULL, "step", "<seconds>", "Valid with command macs-per-time. Default 1");
-	struct arg_str *a_logFileName = arg_str0("f", "log-file", "<file>", "Read log from the file(log-read). Default stdin.");
-	
+	struct arg_str *a_logFileName = arg_str0("l", "log-file", "<file>", "Load log from the file(log-read). Default stdin.");
 
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");

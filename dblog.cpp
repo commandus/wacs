@@ -186,26 +186,20 @@ int putLogEntries
 	int c = 0;
 	while (!onPutLogEntry(onPutLogEntryEnv, &record)) {
 		// swap bytes if needed
-#if BYTE_ORDER == LITTLE_ENDIAN
-		record.dt = ntohl(record.dt);		
-		record.device_id = ntohs(record.device_id);
-		record.ssi_signal = ntohs(record.ssi_signal);
-#endif	
 		LogKey key;
 		key.tag = 'L';
-#if __BYTE_ORDER == __LITTLE_ENDIAN	
-		key.dt = htobe32(time(NULL));
-#else
-		key.dt = time(NULL);
-#endif
 		memmove(key.sa, record.sa, 6);
-		MDB_val dbkey;
-		dbkey.mv_size = sizeof(LogKey);
-		dbkey.mv_data = &key;
 
 		LogData data;
 		data.device_id = record.device_id;
-		data.ssi_signal = record.ssi_signal;
+		data.ssi_signal = record.ssi_signal;	// do not htobe16
+#if BYTE_ORDER == LITTLE_ENDIAN
+		key.dt = htobe32(record.dt);
+#endif	
+		MDB_val dbkey;
+		dbkey.mv_size = sizeof(LogKey);
+		dbkey.mv_data = &key;
+		
 		MDB_val dbdata;
 		dbdata.mv_size = sizeof(LogData);
 		dbdata.mv_data = &data;
@@ -455,6 +449,7 @@ int rmLog
 	else
 		dir = MDB_PREV;
 
+	int cnt = 0;
 	do {
 		if ((dbval.mv_size < sizeof(LogData)) || (dbkey.mv_size < sizeof(LogKey)))
 			continue;
@@ -488,6 +483,7 @@ int rmLog
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
 		mdb_cursor_del(cursor, 0);
+		cnt++;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
 
 	r = mdb_txn_commit(env->txn);
@@ -496,6 +492,8 @@ int rmLog
 		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
 		return ERRCODE_LMDB_TXN_COMMIT;
 	}
+	if (r == 0)
+		r = cnt;
 	return r;
 }
 

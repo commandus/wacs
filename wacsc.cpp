@@ -176,7 +176,7 @@ static int lsLog
 )
 {
 	struct dbenv env;
-	int r = 0;
+	int rr = 0;
 	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -186,23 +186,29 @@ static int lsLog
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
-		r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLog, onLogEnv);
+		int r = readLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish, onLog, onLogEnv);
+		if (r < 0) {
+			rr =r;
+			break;
+		}
+		else
+			rr += r;
 	}
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-		r = ERRCODE_LMDB_CLOSE;
+		return ERRCODE_LMDB_CLOSE;
 	}
-	return r;
+	return rr;
 }
 
-static size_t rmLog
+static int rmLog
 (
 	WacscConfig *config
 )
 {
 	struct dbenv env;
-	size_t r = 0;
+	int rr = 0;
 	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -212,18 +218,20 @@ static size_t rmLog
 	{
 		uint8_t sa[6];
 		int macSize = strtomacaddress(&sa, *it);
-		int rr = rmLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish);
-		if (rr < 0)
-			std::cerr << "Error " << rr << std::endl;
+		int r = rmLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish);
+		if (r < 0) {
+			rr =r;
+			break;
+		}
 		else
-			r += rr;
+			rr += r;
 	}
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-		r = ERRCODE_LMDB_CLOSE;
+		return ERRCODE_LMDB_CLOSE;
 	}
-	return r;
+	return rr;
 }
 
 /**
@@ -264,12 +272,19 @@ static bool onPutLogEntry
 	if (getline(*strm, line))
 	{
 		parseLogLine(retval, line);
+#ifdef DEBUG
+		std::cerr 
+			<< mactostr(retval->sa) << "\t"
+			<< time_t2string(retval->dt) << "\t"
+			<< retval->device_id << "\t"
+			<< retval->ssi_signal << std::endl;
+#endif			
 		return false;
 	}
 	return true;
 }
 
-static size_t loadLog
+static int loadLog
 (
 	WacscConfig *config
 )
@@ -286,17 +301,13 @@ static size_t loadLog
 	else
 		strm = &std::cin;
 	int r = putLogEntries(&env, config->verbosity, onPutLogEntry, strm);
-	if (r < 0)
-		std::cerr << "Error " << r << std::endl;
-	else
-		std::cout << r << " records added." << std::endl;
 	if (!config->logFileName.empty())
 		delete strm;
 
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-		r = ERRCODE_LMDB_CLOSE;
+		return ERRCODE_LMDB_CLOSE;
 	}
 	return r;
 }
@@ -325,7 +336,7 @@ static int lsLastProbe
 	if (!closeDb(&env))
 	{
 		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
-		r = ERRCODE_LMDB_CLOSE;
+		return ERRCODE_LMDB_CLOSE;
 	}
 	return r;
 }
@@ -418,14 +429,21 @@ int main(int argc, char** argv)
 		break;
 	case CMD_REMOVE:
 		{
-			size_t c = rmLog(config);
-			std::cout << c << " records removed." << std::endl;
+			int c = rmLog(config);
+			if (c < 0)
+				std::cerr << "Error " << c << std::endl;
+			else
+				std::cout << c << " records removed." << std::endl;
+
 		}
 		break;
 	case CMD_LOG_READ:
 		{
-			size_t c = loadLog(config);
-			std::cout << c << " records added." << std::endl;
+			int c = loadLog(config);
+			if (c < 0)
+				std::cerr << "Error " << c << std::endl;
+			else
+				std::cout << c << " records added." << std::endl;
 		}
 		break;
 	default:
