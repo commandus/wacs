@@ -3,6 +3,7 @@
 #include "errorcodes.h"
 #include "hostapd-log-entry.h"
 #include <string.h>
+#include <netinet/in.h>
 
 #include "log.h"
 
@@ -77,7 +78,7 @@ bool closeDb
 /**
  * @brief Store input packet to the LMDB
  * @param env database env
- * @param buffer buffer
+ * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-32768..23767), MAC(6 bytes)
  * @param buffer_size buffer size
  * @return 0 - success
  */
@@ -161,6 +162,96 @@ int putLog
 }
 
 /**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @return 0 - success
+ */
+int putLogEntries
+(
+	struct dbenv *env,
+	int verbosity,
+	OnPutLogEntry onPutLogEntry,
+	void *onPutLogEntryEnv
+)
+{
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LogRecord record;
+	int c = 0;
+	while (!onPutLogEntry(onPutLogEntryEnv, &record)) {
+		// swap bytes if needed
+#if BYTE_ORDER == LITTLE_ENDIAN
+		record.dt = ntohl(record.dt);		
+		record.device_id = ntohs(record.device_id);
+		record.ssi_signal = ntohs(record.ssi_signal);
+#endif	
+		LogKey key;
+		key.tag = 'L';
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+		key.dt = htobe32(time(NULL));
+#else
+		key.dt = time(NULL);
+#endif
+		memmove(key.sa, record.sa, 6);
+		MDB_val dbkey;
+		dbkey.mv_size = sizeof(LogKey);
+		dbkey.mv_data = &key;
+
+		LogData data;
+		data.device_id = record.device_id;
+		data.ssi_signal = record.ssi_signal;
+		MDB_val dbdata;
+		dbdata.mv_size = sizeof(LogData);
+		dbdata.mv_data = &data;
+		
+		if (verbosity > 2)
+			LOG(INFO) << MSG_RECEIVED
+				<< ", MAC: " << mactostr(key.sa)
+				<< ", device_id: " << record.device_id
+				<< ", ssi_signal: " << record.ssi_signal
+				<< std::endl;
+
+		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		if (r)
+		{
+			mdb_txn_abort(env->txn);
+			LOG(ERROR) << ERR_LMDB_PUT << r;
+			return ERRCODE_LMDB_PUT;
+		}
+
+		// probe
+		key.tag = 'P';
+		dbkey.mv_size = sizeof(LastProbeKey);
+		dbdata.mv_size = sizeof(key.dt); 
+		dbdata.mv_data = &(key.dt);
+		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		
+		c++;
+	}
+
+	if (r)
+	{
+		mdb_txn_abort(env->txn);
+		LOG(ERROR) << ERR_LMDB_PUT << r;
+		return ERRCODE_LMDB_PUT;
+	}
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return c;
+}
+
+/**
  * @brief Read log data from the LMDB
  * @param env database env
  * @param sa can be NULL
@@ -168,6 +259,7 @@ int putLog
  * @param start 0- no limit
  * @param finish 0- no limit
  * @param onLog callback
+ * @param onLogEnv object passed to callback
  */
 int readLog
 (
@@ -279,6 +371,123 @@ int readLog
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
 		if (onLog(onLogEnv, &key1, &data))
 			break;
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}
+
+/**
+ * @brief Remove log data from the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param saSize can be 0
+ * @param start 0- no limit
+ * @param finish 0- no limit
+ */
+int rmLog
+(
+	struct dbenv *env,
+	const uint8_t *sa,			// MAC address
+	int saSize,
+	time_t start,				// time, seconds since Unix epoch 
+	time_t finish
+)
+{
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LogKey key;
+	key.tag = 'L';
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+	key.dt = htobe32(start);
+#else
+	key.dt = start;
+#endif	
+	int sz;
+	if (saSize >= 6)
+		sz = 6;
+	else 
+		if (saSize <= 0)
+			sz = 0;
+		else
+			sz = saSize;
+		
+	memset(key.sa, 0, 6);
+	if (sa)
+		memmove(key.sa, sa, sz);
+
+	MDB_val dbkey;
+	dbkey.mv_size = sizeof(LogKey);
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	MDB_val dbval;
+	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+
+	MDB_cursor_op dir;
+	if (finish >= start)
+		dir = MDB_NEXT;
+	else
+		dir = MDB_PREV;
+
+	do {
+		if ((dbval.mv_size < sizeof(LogData)) || (dbkey.mv_size < sizeof(LogKey)))
+			continue;
+		LogKey key1;
+		memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, 6);
+#if __BYTE_ORDER == __LITTLE_ENDIAN	
+		key1.dt = be32toh(((LogKey*) dbkey.mv_data)->dt);
+#else
+		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
+#endif	
+		if (sa)
+			if (memcmp(key1.sa, sa, sz) != 0)
+				break;
+
+		if (finish > start) 
+		{
+			if (key1.dt > finish)
+				break;
+			if (key1.dt < start)
+				continue;
+		}
+		else
+		{
+			if (key1.dt < finish)
+				break;
+			if (key1.dt > start)
+				continue;
+		}
+
+		LogData data;
+		data.device_id = ((LogData *) dbval.mv_data)->device_id;
+		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
+		mdb_cursor_del(cursor, 0);
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
 
 	r = mdb_txn_commit(env->txn);

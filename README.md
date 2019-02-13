@@ -2,7 +2,9 @@
 
 ## History
 
-20190211 wacsc: option --sa removed
+2019-02-13 wacsc: commands remove, log-
+
+2019-02-11 wacsc: option --sa removed
 
 [Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
 

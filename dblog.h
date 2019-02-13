@@ -25,6 +25,7 @@
 #define mdb_put mdbx_put
 #define mdb_cursor_open mdbx_cursor_open
 #define mdb_cursor_get mdbx_cursor_get
+#define mdb_cursor_del mdbx_cursor_del
 
 #define mv_size iov_len
 #define mv_data iov_base
@@ -60,6 +61,14 @@ typedef struct
 	uint8_t sa[6];		// MAC address
 } LastProbeKey;
 
+typedef struct 
+{
+	uint32_t dt;		// Date & Time
+	uint16_t device_id;	// 0..255 AP identifier
+	int16_t ssi_signal;	// dB
+	uint8_t sa[6];		// MAC address
+} LogRecord;
+
 /**
  * @brief Opens LMDB database file
  * @param env created LMDB environment(transaction, cursor)
@@ -84,21 +93,6 @@ bool closeDb
 	struct dbenv *env
 );
 
-/**
- * @brief Store input log data to the LMDB
- * @param env database env
- * @param buffer buffer
- * @param size buffer size
- * @return 0 - success
- */
-int putLog
-(
-	struct dbenv *env,
-	void *buffer,
-	size_t size,
-	int verbosity
-);
-
 // callback, return true - stop request, false- continue
 typedef bool (*OnLog)
 (
@@ -112,6 +106,44 @@ typedef bool (*OnLastProbe)
 (
 	void *env,
 	LastProbeKey *key
+);
+
+/**
+ * callback for putLogEntries, return true - stop request, false- continue
+ * @param retval return date&time, device id, ssi signal
+ */
+typedef bool (*OnPutLogEntry)
+(
+	void *env,
+	LogRecord *rec
+);
+
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @return 0 - success
+ */
+int putLog
+(
+	struct dbenv *env,
+	void *buffer,
+	size_t size,
+	int verbosity
+);
+
+/**
+ * @brief Store input log data to the LMDB
+ * @param env database env
+ * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-32768..23767), MAC(6 bytes)
+ * @param size buffer size
+ * @return 0 - success
+ */
+int putLogEntries
+(
+	struct dbenv *env,
+	int verbosity,
+	OnPutLogEntry onPutLogEntry,
+	void *onPutLogEntryEnv
 );
 
 /**
@@ -133,6 +165,23 @@ int readLog
 	time_t finish,
 	OnLog onLog,
 	void *onLogEnv
+);
+
+/**
+ * @brief remove log data from the LMDB
+ * @param env database env
+ * @param sa can be NULL
+ * @param saSize can be 0 
+ * @param start 0- no limit
+ * @param finish 0- no limit
+ */
+int rmLog
+(
+	struct dbenv *env,
+	const uint8_t *sa,			///< MAC address
+	int saSize,
+	time_t start,				///< time, seconds since Unix epoch 
+	time_t finish
 );
 
 /**

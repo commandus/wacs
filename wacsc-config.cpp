@@ -26,7 +26,7 @@
 
 WacscConfig::WacscConfig()
 	: errorcode(0), cmd(0), verbosity(0), 
-	path(getDefaultDatabasePath()), offset(0), count(0)
+	path(getDefaultDatabasePath()), offset(0), count(0), logFileName("")
 {
 }
 	
@@ -61,7 +61,10 @@ static int parseCommand
 		return CMD_COUNT_LAST_PROBE;
 	if (v == "macs-per-time")
 		return CMD_MACS_PER_TIME;
-	
+	if (v == "remove")
+		return CMD_REMOVE;
+	if (v == "log-read")
+		return CMD_LOG_READ;
 	return CMD_NONE;
 }
 
@@ -77,7 +80,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: test|log|probe|log-count|probe-count|macs-per-time");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: log|probe|log-count|probe-count|macs-per-time|test|remove|log-read");
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
@@ -98,6 +101,8 @@ int WacscConfig::parseCmd
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
 	
 	struct arg_int *a_step_seconds = arg_int0(NULL, "step", "<seconds>", "Valid with command macs-per-time. Default 1");
+	struct arg_str *a_logFileName = arg_str0("f", "log-file", "<file>", "Read log from the file(log-read). Default stdin.");
+	
 
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
@@ -111,6 +116,7 @@ int WacscConfig::parseCmd
 		a_offset, a_count,
 		a_db_path, a_flags, a_mode,
 		a_step_seconds,
+		a_logFileName,
 		a_verbosity, a_help, a_end 
 	};
 
@@ -209,7 +215,12 @@ int WacscConfig::parseCmd
 		count = *a_count->ival;
 	else
 		count = DEF_COUNT;
-
+	
+	if (a_logFileName->count)
+		logFileName = *a_logFileName->sval;
+	else
+		logFileName = "";
+	
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)
 	{

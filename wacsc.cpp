@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <signal.h>
 #include <argtable3/argtable3.h>
+#include <fstream>
+#include <sstream>
 
 #include "platform.h"
 #include "utilstring.h"
@@ -194,6 +196,111 @@ static int lsLog
 	return r;
 }
 
+static size_t rmLog
+(
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	size_t r = 0;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		int rr = rmLog(&env, config->mac.empty() ? NULL : sa, macSize, config->start, config->finish);
+		if (rr < 0)
+			std::cerr << "Error " << rr << std::endl;
+		else
+			r += rr;
+	}
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		r = ERRCODE_LMDB_CLOSE;
+	}
+	return r;
+}
+
+/**
+ * line:
+ * MAC date&time deviceId ssi_signal
+ * 00:ec:0a:ed:5c:55	2019-01-31T15:48:49+09	1	-76
+ */
+static void parseLogLine
+(
+	LogRecord *retval,
+	const std::string &line
+)
+{
+	std::stringstream ss(line);
+	std::string mac;
+	std::string dt;
+	ss 
+		>> mac
+		>> dt
+		>> retval->device_id
+		>> retval->ssi_signal;
+	strtomacaddress(retval->sa, mac);
+	retval->dt = parseDate(dt.c_str());
+}
+
+static bool onPutLogEntry
+(
+	void *env,
+	LogRecord *retval
+)
+{
+	if (!env)
+		return true;
+	std::ifstream *strm = (std::ifstream *) env;
+	if (strm->bad())
+		return true;
+	std::string line;
+	if (getline(*strm, line))
+	{
+		parseLogLine(retval, line);
+		return false;
+	}
+	return true;
+}
+
+static size_t loadLog
+(
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+	std::istream *strm;
+	if (!config->logFileName.empty())
+		strm = new std::ifstream(config->logFileName.c_str());
+	else
+		strm = &std::cin;
+	int r = putLogEntries(&env, config->verbosity, onPutLogEntry, strm);
+	if (r < 0)
+		std::cerr << "Error " << r << std::endl;
+	else
+		std::cout << r << " records added." << std::endl;
+	if (!config->logFileName.empty())
+		delete strm;
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		r = ERRCODE_LMDB_CLOSE;
+	}
+	return r;
+}
+
 static int lsLastProbe
 (
 	WacscConfig *config,
@@ -307,6 +414,18 @@ int main(int argc, char** argv)
 			HistogramMacsPerTime reslt(config->start, config->finish, config->step_seconds);
 			macsPerTime(&reslt, config);
 			std::cout << reslt.toString() << std::endl;
+		}
+		break;
+	case CMD_REMOVE:
+		{
+			size_t c = rmLog(config);
+			std::cout << c << " records removed." << std::endl;
+		}
+		break;
+	case CMD_LOG_READ:
+		{
+			size_t c = loadLog(config);
+			std::cout << c << " records added." << std::endl;
 		}
 		break;
 	default:

@@ -17,6 +17,8 @@
 #define	CMD_COUNT_LOG			4
 #define	CMD_COUNT_LAST_PROBE	5
 #define	CMD_MACS_PER_TIME		6
+#define	CMD_REMOVE				7
+#define	CMD_LOG_READ			8
 
 
 /**
@@ -56,6 +58,8 @@ public:
 	int count;										///< -c. -1 - unlimited
 
 	int step_seconds;								///< --step
+	
+	std::string logFileName;						///< file name to read log. Default stdin
 
 	WacscConfig();
 	WacscConfig
