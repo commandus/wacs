@@ -135,7 +135,7 @@ static bool onLog
 	if (data)
 		std::cout
 			<< "\t" << data->device_id
-			<< "\t" << data->ssi_signal;
+			<< "\t" << (int) data->ssi_signal;
 	std::cout << std::endl;
 	return e->interruptFlag;	// interrupt sigmal received
 }
@@ -277,7 +277,7 @@ static bool onPutLogEntry
 			<< mactostr(retval->sa) << "\t"
 			<< time_t2string(retval->dt) << "\t"
 			<< retval->device_id << "\t"
-			<< retval->ssi_signal << std::endl;
+			<< (int) retval->ssi_signal << std::endl;
 #endif			
 		return false;
 	}

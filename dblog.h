@@ -52,7 +52,7 @@ typedef struct
 typedef struct 
 {
 	uint16_t device_id;	// 0
-	int16_t ssi_signal;	// dB
+	int8_t ssi_signal;	// dBm
 } LogData;
 
 typedef struct 
@@ -63,10 +63,10 @@ typedef struct
 
 typedef struct 
 {
+	uint8_t sa[6];		// MAC address
 	uint32_t dt;		// Date & Time
 	uint16_t device_id;	// 0..255 AP identifier
-	int16_t ssi_signal;	// dB
-	uint8_t sa[6];		// MAC address
+	int8_t ssi_signal;	// dBm
 } LogRecord;
 
 /**
@@ -134,7 +134,7 @@ int putLog
 /**
  * @brief Store input log data to the LMDB
  * @param env database env
- * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-32768..23767), MAC(6 bytes)
+ * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-128..127), MAC(6 bytes)
  * @param size buffer size
  * @return 0 - success
  */

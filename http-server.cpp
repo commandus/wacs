@@ -201,7 +201,7 @@ static bool onReqLog
 	if (data)
 		*req->retval
 			<< ",\"device_id\":" << data->device_id
-			<< ",\"ssi_signal\":" << data->ssi_signal;
+			<< ",\"ssi_signal\":" << (int) data->ssi_signal;
 	*req->retval			
 		<< "},";
 	return false;

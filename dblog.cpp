@@ -78,7 +78,7 @@ bool closeDb
 /**
  * @brief Store input packet to the LMDB
  * @param env database env
- * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-32768..23767), MAC(6 bytes)
+ * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-128..127), MAC(6 bytes)
  * @param buffer_size buffer size
  * @return 0 - success
  */
@@ -128,7 +128,7 @@ int putLog
 		LOG(INFO) << MSG_RECEIVED << size 
 			<< ", MAC: " << mactostr(key.sa)
 			<< ", device_id: " << entry->device_id
-			<< ", ssi_signal: " << entry->ssi_signal
+			<< ", ssi_signal: " << (int) entry->ssi_signal
 			<< std::endl;
 
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
@@ -327,11 +327,14 @@ int readLog
 		return r;
 	}
 
-	MDB_cursor_op dir;
-	if (finish >= start)
-		dir = MDB_NEXT;
-	else
-		dir = MDB_PREV;
+	if (finish == 0)
+		finish = UINT32_MAX;
+	if (finish < start)
+	{
+		uint32_t swap = start;
+		start = finish;
+		finish = swap;
+	}
 
 	do {
 		if (dbval.mv_size < sizeof(LogData))
@@ -346,26 +349,24 @@ int readLog
 		if (sa && sz)
 			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
-		if (finish > start) 
+		if (key1.dt > finish)
 		{
-			if (key1.dt > finish)
-				continue;
-			if (key1.dt < start)
+			if (sz == 6)
+				break;
+			else
 				continue;
 		}
-		else
-		{
-			if (key1.dt < finish)
-				continue;
-			if (key1.dt > start)
-				continue;
-		}
+		if (key1.dt < start)
+			continue;
+		if (((LogKey*) dbkey.mv_data)->tag != 'L')
+			break;
+		
 		LogData data;
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
 		if (onLog(onLogEnv, &key1, &data))
 			break;
-	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
 
 	r = mdb_txn_commit(env->txn);
 	if (r)
@@ -443,11 +444,14 @@ int rmLog
 		return r;
 	}
 
-	MDB_cursor_op dir;
-	if (finish >= start)
-		dir = MDB_NEXT;
-	else
-		dir = MDB_PREV;
+	if (finish == 0)
+		finish = UINT32_MAX;
+	if (finish < start)
+	{
+		uint32_t swap = start;
+		start = finish;
+		finish = swap;
+	}
 
 	int cnt = 0;
 	do {
@@ -464,27 +468,24 @@ int rmLog
 			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
 
-		if (finish > start) 
+		if (key1.dt > finish)
 		{
-			if (key1.dt > finish)
+			if (sz == 6)
 				break;
-			if (key1.dt < start)
+			else
 				continue;
 		}
-		else
-		{
-			if (key1.dt < finish)
-				break;
-			if (key1.dt > start)
-				continue;
-		}
+		if (key1.dt < start)
+			continue;
+		if (((LogKey*) dbkey.mv_data)->tag != 'L')
+			break;
 
 		LogData data;
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
 		mdb_cursor_del(cursor, 0);
 		cnt++;
-	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
 
 	r = mdb_txn_commit(env->txn);
 	if (r)
@@ -571,7 +572,14 @@ int readLastProbe
 		return r;
 	}
 
-	MDB_cursor_op dir = MDB_NEXT;
+	if (finish == 0)
+		finish = UINT32_MAX;
+	if (finish < start)
+	{
+		uint32_t swap = start;
+		start = finish;
+		finish = swap;
+	}
 
 	do {
 		LogKey key1;
@@ -588,19 +596,11 @@ int readLastProbe
 #else
 		key1.dt = *((time_t*) dbval.mv_data);
 #endif	
-		if (finish > start) 
-		{
-			if ((key1.dt > finish) || (key1.dt < start))
-				continue;
-		}
-		else
-		{
-			if ((key1.dt < finish) || (key1.dt > start))
-				continue;
-		}
+		if ((key1.dt > finish) || (key1.dt < start))
+			continue;
 		if (onLog(onLogEnv, &key1, NULL))
 			break;
-	} while (mdb_cursor_get(cursor, &dbkey, &dbval, dir) == MDB_SUCCESS);
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
 
 	r = mdb_txn_commit(env->txn);
 	if (r)
