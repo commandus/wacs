@@ -300,13 +300,15 @@ int readLog
 			sz = saSize;
 		
 	memset(key.sa, 0, 6);
-	if (sa)
+	if (sa && sz)
 		memmove(key.sa, sa, sz);
 
 	MDB_val dbkey;
-	dbkey.mv_size = sizeof(LogKey);
+	if (sz == 6)
+		dbkey.mv_size = sizeof(LogKey);
+	else
+		dbkey.mv_size = sizeof(uint8_t) + sz;
 	dbkey.mv_data = &key;
-
 	// Get the last key
 	MDB_cursor *cursor;
 	MDB_val dbval;
@@ -332,7 +334,7 @@ int readLog
 		dir = MDB_PREV;
 
 	do {
-		if ((dbval.mv_size < sizeof(LogData)) || (dbkey.mv_size < sizeof(LogKey)))
+		if (dbval.mv_size < sizeof(LogData))
 			continue;
 		LogKey key1;
 		memmove(key1.sa, ((LogKey*) dbkey.mv_data)->sa, 6);
@@ -341,25 +343,23 @@ int readLog
 #else
 		key1.dt = ((LogKey*) dbkey.mv_data)->dt;
 #endif	
-		if (sa)
+		if (sa && sz)
 			if (memcmp(key1.sa, sa, sz) != 0)
 				break;
-
 		if (finish > start) 
 		{
 			if (key1.dt > finish)
-				break;
+				continue;
 			if (key1.dt < start)
 				continue;
 		}
 		else
 		{
 			if (key1.dt < finish)
-				break;
+				continue;
 			if (key1.dt > start)
 				continue;
 		}
-
 		LogData data;
 		data.device_id = ((LogData *) dbval.mv_data)->device_id;
 		data.ssi_signal = ((LogData *) dbval.mv_data)->ssi_signal;
