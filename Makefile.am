@@ -4,6 +4,8 @@ SUBDIRS = .
 CFLAGS=-g -O0
 CXXFLAGS=-g -O0
 
+AM_CXXFLAGS = -std=c++11 
+
 ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
@@ -30,8 +32,6 @@ CLEANFILES =
 ARGT3HEADERS = third_party/argtable3/argtable3.h
 ARGT3SOURCES = third_party/argtable3/argtable3.c
 
-AM_CXXFLAGS = 
-
 nobase_dist_include_HEADERS = \
 	platform.h log.h \
 	wacs-config.h wacs.h wacs-c.h wacs-http-config.h \
@@ -41,7 +41,10 @@ nobase_dist_include_HEADERS = \
 	snmpagent-wacs.h snmp-params.h utilsnmp.h \
 	wacs-snmp-config.h \
 	third_party/get_rss/get_rss.h \
+	third_party/wpn/utilvapid.h \
+	third_party/nlohmann/json.hpp \
 	if-ip-address.h histogrammacspertime.h \
+	third_party/ecec/ece/keys.h third_party/ecec/ece/trailer.h \
 	$(ARGT3HEADERS)
 
 common_src = $(ARGT3SOURCES)
@@ -76,9 +79,11 @@ wacs_SOURCES = \
 	snmpagent-wacs.cpp snmp-params.cpp utilsnmp.cpp \
 	if-ip-address.cpp \
 	third_party/get_rss/get_rss.c \
+	third_party/wpn/utilvapid.cpp \
+	third_party/ecec/base64url.c third_party/ecec/decrypt.c third_party/ecec/encrypt.c third_party/ecec/keys.c third_party/ecec/params.c third_party/ecec/trailer.c \
 	$(common_src)
 wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg \
-	-lnetsnmp -lnetsnmpagent -lpthread
+	-lnetsnmp -lnetsnmpagent -lpthread -lcurl -lssl
 wacs_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
 
 #
