@@ -19,7 +19,6 @@ bool openDb
 	const char *path,
 	int flags,
 	int mode
-
 )
 {
 	int rc = mdb_env_create(&env->env);
@@ -599,6 +598,176 @@ int readLastProbe
 		if ((key1.dt > finish) || (key1.dt < start))
 			continue;
 		if (onLog(onLogEnv, &key1, NULL))
+			break;
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}
+
+// Notification database routines 
+
+/**
+ * Get notification JSON string into retval
+ * @param retval return value
+ * @return empty string if not found
+ */
+int getNotification
+(
+	std::string &retval,
+	struct dbenv *env,
+	const uint8_t *sa			///< MAC address
+)
+{
+	LastProbeKey key;
+	key.tag = 'T';
+	memmove(key.sa, sa, 6);
+	MDB_val dbkey;
+	dbkey.mv_size = 6;
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	MDB_val dbval;
+	int r = mdb_cursor_open(env->txn, env->dbi, &cursor);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_FIRST);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+
+	if (dbval.mv_size)
+		retval = std::string((const char *) dbval.mv_data, dbval.mv_size);
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}
+
+/**
+ * Put notification JSON string 
+ * @param value return notification JSON string. If empty, clear
+ * @return 0 - success
+ */
+int putNotification
+(
+	struct dbenv *env,
+	const uint8_t *sa,			///< MAC address
+	const std::string &value
+)
+{
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	// notification
+	LastProbeKey key;
+	key.tag = 'T';
+	memmove(key.sa, sa, 6);
+	MDB_val dbkey;
+	dbkey.mv_size = sizeof(LogKey);
+	dbkey.mv_data = &key;
+
+	MDB_val dbdata;
+	dbdata.mv_size = value.size();
+	dbdata.mv_data = (void *) value.c_str();
+	
+	if (value.size())
+		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+	else
+		r = mdb_del(env->txn, env->dbi, &dbkey, 0);
+	if (r)
+	{
+		mdb_txn_abort(env->txn);
+		LOG(ERROR) << ERR_LMDB_PUT << r;
+		return ERRCODE_LMDB_PUT;
+	}
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r;
+}
+
+/**
+ * List notification JSON string 
+ * @param value return notification JSON string 
+ * @return 0 - success
+ */
+int lsNotification
+(
+	struct dbenv *env,
+	OnNotification onNotification,
+	void *onNotificationEnv
+)
+{
+	if (!onNotification)
+	{
+		LOG(ERROR) << ERR_WRONG_PARAM << "onNotification" << std::endl;
+		return ERRCODE_WRONG_PARAM;
+	}
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LastProbeKey key;
+	key.tag = 'T';
+
+	memset(key.sa, 0, 6);
+	MDB_val dbkey;
+	dbkey.mv_size = 6;
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	MDB_val dbval;
+	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
+	if (r != MDB_SUCCESS) 
+	{
+		// LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		mdb_txn_abort(env->txn);
+		return r;
+	}
+
+	do {
+		if ((dbval.mv_size <= 0) || (dbkey.mv_size < 6))
+			continue;
+		std::string json((const char *) dbval.mv_data, dbval.mv_size);
+		if (onNotification(onNotificationEnv, (const char *) ((LastProbeKey*) dbkey.mv_data)->sa, json))
 			break;
 	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
 

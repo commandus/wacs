@@ -168,6 +168,20 @@ static bool onLogHistogram
 	return reqEnv.interruptFlag;
 }
 
+static bool onNotification
+(
+	void *env,
+	const char *sa,
+	const std::string &data
+)
+{
+	if (!env)
+		return true;
+	std::ostream *strm = (std::ostream *) env; 
+	*strm << mactostr(sa) << "\t" << data << std::endl;
+	return reqEnv.interruptFlag;
+}
+
 static int lsLog
 (
 	WacscConfig *config,
@@ -369,6 +383,96 @@ static int macsPerTime
 	return r;
 }
 
+static int notificationList
+(
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+	std::ostream *strm;
+	if (!config->logFileName.empty())
+		strm = new std::ofstream(config->logFileName.c_str());
+	else
+		strm = &std::cout;
+	int r = lsNotification(&env, onNotification, strm);
+	if (!config->logFileName.empty())
+		delete strm;
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return ERRCODE_LMDB_CLOSE;
+	}
+	return r;
+}
+
+/**
+ * Add notification JSON
+ */
+static int notificationPut
+(
+	WacscConfig *config
+)
+{
+	bool valid = true;
+	for (std::vector<std::string>::const_iterator it(config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[20];
+		int macSize = strtomacaddress(&sa, *it);
+		valid = (macSize == 6);
+			break;
+	}
+	if (!valid)
+		return ERRCODE_WRONG_PARAM;
+
+	std::istream *strm;
+	if (!config->logFileName.empty())
+		strm = new std::ifstream(config->logFileName.c_str());
+	else
+		strm = &std::cin;
+
+	std::string s((std::istreambuf_iterator<char>(*strm)), std::istreambuf_iterator<char>());
+	if (!config->logFileName.empty())
+		delete strm;
+	if (s.empty())
+		return ERRCODE_WRONG_PARAM;
+
+	struct dbenv env;
+	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	int r, cnt = 0;
+	for (std::vector<std::string>::const_iterator it(config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		if (macSize < 6)
+			continue;
+		r = putNotification(&env, sa, s);
+		if (r != 0)
+		{
+			cnt = r;
+			break;
+		}
+		cnt++;
+	}
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return ERRCODE_LMDB_CLOSE;
+	}
+	return cnt;
+}
+
 int main(int argc, char** argv)
 {
 	// Signal handler
@@ -384,7 +488,7 @@ int main(int argc, char** argv)
 
 	if (config->error() != 0)
 	{
-		std::cerr << ERR_NO_CONFIG;
+		std::cerr << ERR_NO_CONFIG << std::endl;
 		delete config;
 		exit(config->error());
 	}
@@ -440,6 +544,23 @@ int main(int argc, char** argv)
 	case CMD_LOG_READ:
 		{
 			int c = loadLog(config);
+			if (c < 0)
+				std::cerr << "Error " << c << std::endl;
+			else
+				std::cout << c << " records added." << std::endl;
+		}
+		break;
+	case CMD_LOG_NOTIFICATION:
+		{
+			int c = notificationList(config);
+			if (c < 0)
+				if (c != -30798)
+					std::cerr << "Error " << c << std::endl;
+		}
+		break;
+	case CMD_LOG_NOTIFICATION_PUT:
+		{
+			int c = notificationPut(config);
 			if (c < 0)
 				std::cerr << "Error " << c << std::endl;
 			else

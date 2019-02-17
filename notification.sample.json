@@ -1,0 +1,10 @@
+[
+	{
+		"public":"1",
+		"private":"2",
+		"endpoint":"3",
+		"p256dh":"4",
+		"auth":"5",
+		"contact":"mailto:alice@acme.com"
+	}
+]

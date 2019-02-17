@@ -3,7 +3,10 @@
 #else
 #include "mdbx.h"
 
+#include <string>
+
 #define MDB_SET_RANGE MDBX_SET_RANGE
+#define MDB_FIRST MDBX_FIRST
 #define MDB_NEXT MDBX_NEXT
 #define MDB_PREV MDBX_PREV
 #define MDB_SUCCESS MDBX_SUCCESS
@@ -23,6 +26,7 @@
 #define mdb_open mdbx_dbi_open
 #define mdb_close mdbx_dbi_close
 #define mdb_put mdbx_put
+#define mdb_del mdbx_del
 #define mdb_cursor_open mdbx_cursor_open
 #define mdb_cursor_get mdbx_cursor_get
 #define mdb_cursor_del mdbx_cursor_del
@@ -118,6 +122,14 @@ typedef bool (*OnPutLogEntry)
 	LogRecord *rec
 );
 
+// callback, return true - stop request, false- continue
+typedef bool (*OnNotification)
+(
+	void *env,
+	const char *sa,
+	const std::string &data
+);
+
 /**
  * @brief Store input log data to the LMDB
  * @param env database env
@@ -203,4 +215,42 @@ int readLastProbe
 	time_t finish,
 	OnLog onLog,
 	void *onLogEnv
+);
+
+// Notification database routines 
+
+/**
+ * Get notification JSON string into retval
+ * @param retval return value
+ * @return empty string if not found
+ */
+int getNotification
+(
+	std::string &retval,
+	struct dbenv *env,
+	const uint8_t *sa			///< MAC address
+);
+
+/**
+ * Put notification JSON string 
+ * @param value return notification JSON string. If empty, clear
+ * @return 0 - success
+ */
+int putNotification
+(
+	struct dbenv *env,
+	const uint8_t *sa,			///< MAC address
+	const std::string &value
+);
+
+/**
+ * List notification JSON string 
+ * @param value return notification JSON string 
+ * @return 0 - success
+ */
+int lsNotification
+(
+	struct dbenv *env,
+	OnNotification onNotification,
+	void *onNotificationEnv
 );

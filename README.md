@@ -549,6 +549,35 @@ Valid filter options:
 - start
 - finish
 
+## Notification
+
+List
+
+```
+./wacsc notification
+```
+
+Write to file:
+
+```
+./wacsc notification -l a.lst
+```
+
+## Put notification on MAC
+
+```
+./wacsc notification-put 11:22:33:44:55:66 < notification.sample.json
+```
+
+or
+
+```
+./wacsc notification-put 11:22:33:44:55:66 -l notification.sample.json
+```
+
+
+
+
 ## SNMP settings
 
 ### Check 

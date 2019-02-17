@@ -65,6 +65,10 @@ static int parseCommand
 		return CMD_REMOVE;
 	if (v == "log-read")
 		return CMD_LOG_READ;
+	if (v == "notification")
+		return CMD_LOG_NOTIFICATION;
+	if (v == "notification-put")
+		return CMD_LOG_NOTIFICATION_PUT;
 	return CMD_NONE;
 }
 
@@ -80,7 +84,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: log|probe|log-count|probe-count|macs-per-time|test|remove|log-read");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: log|probe|log-count|probe-count|macs-per-time|test|remove|log-read|notification|notification-put");
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
@@ -101,7 +105,7 @@ int WacscConfig::parseCmd
 	struct arg_int *a_mode = arg_int0("m", "mode", "<number>", "LMDB file open mode. Default 0664");
 	
 	struct arg_int *a_step_seconds = arg_int0(NULL, "step", "<seconds>", "Valid with command macs-per-time. Default 1");
-	struct arg_str *a_logFileName = arg_str0("l", "log-file", "<file>", "Load log from the file(log-read). Default stdin.");
+	struct arg_str *a_logFileName = arg_str0("l", "file", "<file>", "log-read, notification-put: default stdin. notification: default stdout.");
 
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");

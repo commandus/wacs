@@ -131,4 +131,5 @@ dist_config_DATA = \
 	mib/COMMANDUS-SMI-MIB  mib/WACS-COMMANDUS-MIB \
 	LICENSE COPYING CODE_OF_CONDUCT.md CONTRIBUTING.md HISTORY README.md \
 	third_party/argtable3/README.argtable3.md \
-	autogen.sh
+	autogen.sh \
+	notification.sample.json
