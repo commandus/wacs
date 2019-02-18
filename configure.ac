@@ -46,4 +46,73 @@ AC_TYPE_UINT64_T
 AC_FUNC_FORK
 AC_CHECK_FUNCS([memmove memset])
 
+# postresgql header
+AC_CHECK_HEADERS(libpq-fe.h)
+if test "$ac_cv_header_libpq_fe_h" = "yes"; then
+  POSTGRES=yes
+else
+  old="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS -I/usr/include/postgresql"
+  AC_CHECK_HEADERS(/usr/include/postgresql/libpq-fe.h)
+  if test "$ac_cv_header__usr_include_postgresql_libpq_fe_h" = "yes"; then
+    POSTGRES=yes
+  else
+    CPPFLAGS="$CPPFLAGS -I/usr/include/pgsql"
+    AC_CHECK_HEADERS(/usr/include/pgsql/libpq-fe.h)
+    if test "$ac_cv_header__usr_include_pgsql_libpq_fe_h" = "yes"; then
+      POSTGRES=yes
+    else
+      CPPFLAGS="$CPPFLAGS -I/usr/local/include/pgsql"
+      AC_CHECK_HEADERS(/usr/local/include/pgsql/libpq-fe.h)
+      if test "$ac_cv_header__usr_local_include_pgsql_libpq_fe_h" = "yes"; then
+	POSTGRES=yes
+      else
+        CPPFLAGS="$CPPFLAGS -I/usr/pgsql-9.4/include"
+        AC_CHECK_HEADERS(/usr/pgsql-9.4/include/libpq-fe.h)
+        if test "$ac_cv_header__usr_pgsql_9_4_include_libpq_fe_h" = "yes"; then
+          POSTGRES=yes
+        else
+          CPPFLAGS="$save_CPPFLAGS"
+	  POSTGRES=
+          echo "**************************************************************"
+          echo "Unable to locate libpq (postgres) headers (are they installed)"
+          echo "**************************************************************"
+        fi
+      fi
+    fi
+  fi
+fi
+
+# postgresql library
+if test "$POSTGRES" = "yes"; then
+  if test -d /usr/pgsql-9.4/lib ; then
+    CPPFLAGS="$CPPFLAGS -L/usr/pgsql-9.4/lib"
+    LDFLAGS="$LDFLAGS -L/usr/pgsql-9.4/lib"
+  else
+    if test -d /usr/lib/pgsql ; then
+      CPPFLAGS="$CPPFLAGS -L/usr/lib/pgsql"
+      LDFLAGS="$LDFLAGS -L/usr/lib/pgsql"
+    else
+      if test -d /usr/local/lib/pgsql ; then
+        CPPFLAGS="$CPPFLAGS -L/usr/local/lib/pgsql"
+        LDFLAGS="$LDFLAGS -L/usr/local/lib/pgsql"
+      fi
+    fi
+  fi
+  AC_CHECK_LIB(pq,PQfformat)
+  if test "$ac_cv_lib_pq_PQfformat" != "yes"; then
+      POSTGRES=
+      AC_CHECK_LIB(pq,PQclear)
+      echo "******************************************************"
+      if test "$ac_cv_lib_pq_PQclear" != "yes"; then
+	echo "Unable to locate postgres pq library (is it installed)"
+      else
+	echo "Located postgres pq library, but it is too old to use!"
+      fi
+      echo "Perhaps you can try 'configure --with-postgres=dir=path'"
+      echo "to point to the postgres version you wish to use."
+      echo "******************************************************"
+  fi
+fi
+
 AC_OUTPUT

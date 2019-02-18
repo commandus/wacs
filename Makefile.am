@@ -10,7 +10,8 @@ ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
 bin_PROGRAMS = \
-	wacs wacsc wacs-http wacs-snmp
+	wacs wacs-pg \
+	wacsc wacs-http wacs-snmp
 
 #	Libraries
 lib_LIBRARIES = \
@@ -45,6 +46,7 @@ nobase_dist_include_HEADERS = \
 	third_party/nlohmann/json.hpp \
 	if-ip-address.h histogrammacspertime.h \
 	third_party/ecec/ece/keys.h third_party/ecec/ece/trailer.h \
+	pglog.h pgwriter.h wacs-pg-config.h wacs-pg.h \
 	$(ARGT3HEADERS)
 
 common_src = $(ARGT3SOURCES)
@@ -85,6 +87,24 @@ wacs_SOURCES = \
 wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg \
 	-lnetsnmp -lnetsnmpagent -lpthread -lcurl -lssl
 wacs_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
+
+#
+#	wacs-pg
+#
+wacs_pg_SOURCES = \
+	wacs-pg-config.cpp wacs-pg.cpp pglog.cpp \
+	pgwriter.cpp NanoMessage.cpp errorcodes.cpp \
+	hostapd-log-entry.cpp \
+	daemonize.cpp utilstring.cpp \
+	snmpagent-wacs.cpp snmp-params.cpp utilsnmp.cpp \
+	if-ip-address.cpp \
+	third_party/get_rss/get_rss.c \
+	third_party/wpn/utilvapid.cpp \
+	third_party/ecec/base64url.c third_party/ecec/decrypt.c third_party/ecec/encrypt.c third_party/ecec/keys.c third_party/ecec/params.c third_party/ecec/trailer.c \
+	$(common_src)
+wacs_pg_LDADD = $(commonlibs) -lnanomsg \
+	-lnetsnmp -lnetsnmpagent -lpthread -lcurl -lssl -lpq
+wacs_pg_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
 
 #
 #	wacsc

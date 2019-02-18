@@ -28,6 +28,12 @@
 /* Define to 1 if you have the `netsnmp' library (-lnetsnmp). */
 #define HAVE_LIBNETSNMP 1
 
+/* Define to 1 if you have the `pq' library (-lpq). */
+#define HAVE_LIBPQ 1
+
+/* Define to 1 if you have the <libpq-fe.h> header file. */
+/* #undef HAVE_LIBPQ_FE_H */
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
@@ -84,6 +90,21 @@
 
 /* Define to 1 if `vfork' works. */
 #define HAVE_WORKING_VFORK 1
+
+/* Define to 1 if you have the </usr/include/pgsql/libpq-fe.h> header file. */
+/* #undef HAVE__USR_INCLUDE_PGSQL_LIBPQ_FE_H */
+
+/* Define to 1 if you have the </usr/include/postgresql/libpq-fe.h> header
+   file. */
+#define HAVE__USR_INCLUDE_POSTGRESQL_LIBPQ_FE_H 1
+
+/* Define to 1 if you have the </usr/local/include/pgsql/libpq-fe.h> header
+   file. */
+/* #undef HAVE__USR_LOCAL_INCLUDE_PGSQL_LIBPQ_FE_H */
+
+/* Define to 1 if you have the </usr/pgsql-9.4/include/libpq-fe.h> header
+   file. */
+/* #undef HAVE__USR_PGSQL_9_4_INCLUDE_LIBPQ_FE_H */
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"

@@ -61,4 +61,13 @@ int strtomacaddress
 	const std::string &value
 );
 
+/**
+ * MAC address to string
+ */
+std::string mactostr2
+(
+	const void *value,
+	int size
+);
+
 #endif

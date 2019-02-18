@@ -82,6 +82,8 @@
 
 #define ERRCODE_NO_NOBILE_SUBSCRIBERS			-70
 
+#define ERRCODE_DATABASE_NO_CONNECTION			-80
+#define ERRCODE_DATABASE_STATEMENT_FAIL			-81
 
 #define ERR_COMMAND								"Invalid command line options or help requested. "
 #define ERR_PARSE_COMMAND						"Error parse command line options, possible cause is insufficient memory. "
@@ -131,6 +133,10 @@
 #define ERR_TOO_SMALL							"Insufficient buffer space "
 #define ERR_WSA_ERROR 							"WSAStartup error %d "
 #define ERR_WRONG_PARAM							"Wrong parameter "
+
+
+#define ERR_DATABASE_NO_CONNECTION				"PostgreSQL connection failed "
+#define ERR_DATABASE_STATEMENT_FAIL				"PostgreSQL statement failed "
 
 std:: string getErrorDescription(int code);
 

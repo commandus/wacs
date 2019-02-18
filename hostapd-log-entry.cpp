@@ -55,6 +55,28 @@ std::string mactostr
 /**
  * MAC address to string
  */
+std::string mactostr2
+(
+	const void *value,
+	int size
+)
+{
+	std::stringstream ss;
+	uint8_t *p = (uint8_t *) value;
+	for (int i = 0; i < size; i++)
+	{
+		ss << std::setfill('0') << std::hex 
+			<< std::setw(2) << (int) p[i] << ":";
+	}
+	std::string r = ss.str();
+	if (r.size() > 1)
+		r = r.substr(0, r.size() - 1);
+	return r;
+}
+
+/**
+ * MAC address to string
+ */
 std::string mactostr
 (
 	LogEntry *value
