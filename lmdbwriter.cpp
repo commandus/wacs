@@ -91,11 +91,12 @@ START:
 		LOG(ERROR) << ERR_NN_SET_SOCKET_OPTION << config->message_url << " timeout " << recv_timeout << std::endl;
 		return ERRCODE_NN_BIND;
 	}
-	// sleep (1); // wait for connections
 
 	struct dbenv env;
-
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	if (!openDb(&env))
 	{
 		LOG(ERROR) << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;

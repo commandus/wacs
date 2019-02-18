@@ -7,6 +7,59 @@
 
 #include "log.h"
 
+static int processMapFull
+(
+	struct dbenv *env
+)
+{
+	int r = mdb_txn_abort(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << "map full, abort transaction error " << r << ": " << mdb_strerror(r) << std::endl;
+		return r;
+	}
+	struct MDB_envinfo current_info;
+	r = mdb_env_info(env->env, &current_info, sizeof(current_info));
+	if (r)
+	{
+		LOG(ERROR) << "map full, mdb_env_info error " << r << ": " << mdb_strerror(r) << std::endl;
+		return r;
+	}
+	if (!closeDb(env))
+	{
+		LOG(ERROR) << "map full, error close database " << std::endl;
+		return ERRCODE_LMDB_CLOSE;
+	}
+	size_t new_size = current_info.me_mapsize * 2;
+	LOG(INFO) << "map full, doubling map size from " << current_info.me_mapsize << " to " << new_size << " bytes" << std::endl;
+
+	r = mdb_env_create(&env->env);
+	if (r)
+	{
+		LOG(ERROR) << "map full, mdb_env_create error " << r << ": " << mdb_strerror(r) << std::endl;
+		env->env = NULL;
+		return ERRCODE_LMDB_OPEN;
+	}
+	r = mdb_env_set_mapsize(env->env, new_size);
+	if (r)
+		LOG(ERROR) << "map full, mdb_env_set_mapsize error " << r << ": " << mdb_strerror(r) << std::endl;
+	r = mdb_env_open(env->env, env->path.c_str(), env->flags, env->mode);
+	r = mdb_env_close(env->env);
+	
+	if (!openDb(env))
+	{
+		LOG(ERROR) << "map full, error re-open database" << std::endl;
+		return r;
+	}
+
+	// start transaction
+	r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+		LOG(ERROR) << "map full, begin transaction error " << r << ": " << mdb_strerror(r) << std::endl;
+	
+	return r;
+}
+
 /**
  * @brief Opens LMDB database file
  * @param env created LMDB environment(transaction, cursor)
@@ -15,24 +68,21 @@
  */
 bool openDb
 (
-	struct dbenv *env,
-	const char *path,
-	int flags,
-	int mode
+	struct dbenv *env
 )
 {
 	int rc = mdb_env_create(&env->env);
 	if (rc)
 	{
-		LOG(ERROR) << "mdb_env_create error " << rc << " " << mdb_strerror(rc);
+		LOG(ER/*R*/OR) << "mdb_env_create error " << rc << ": " << mdb_strerror(rc) << std::endl;
 		env->env = NULL;
 		return false;
 	}
 
-	rc = mdb_env_open(env->env, path, flags, mode);
+	rc = mdb_env_open(env->env, env->path.c_str(), env->flags, env->mode);
 	if (rc)
 	{
-		LOG(ERROR) << "mdb_env_open path: " << path << " error " << rc << " " << mdb_strerror(rc);
+		LOG(ERROR) << "mdb_env_open path: " << env->path << " error " << rc  << ": " << mdb_strerror(rc) << std::endl;
 		env->env = NULL;
 		return false;
 	}
@@ -40,16 +90,16 @@ bool openDb
 	rc = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (rc)
 	{
-		LOG(ERROR) << "mdb_txn_begin error " << rc << " " << mdb_strerror(rc);
+		LOG(ERROR) << "mdb_txn_begin error " << rc << ": " << mdb_strerror(rc) << std::endl;
 		env->env = NULL;
 		return false;
 	}
 
 
-	rc = mdb_open(env->txn, NULL, 0, &env->dbi);
+	rc = mdb_dbi_open(env->txn, NULL, 0, &env->dbi);
 	if (rc)
 	{
-		LOG(ERROR) << "mdb_open error " << rc << " " << mdb_strerror(rc);
+		LOG(ERROR) << "mdb_open error " << rc << ": " << mdb_strerror(rc) << std::endl;
 		env->env = NULL;
 		return false;
 	}
@@ -69,7 +119,7 @@ bool closeDb
 	struct dbenv *env
 )
 {
-	mdb_close(env->env, env->dbi);
+	mdb_dbi_close(env->env, env->dbi);
 	mdb_env_close(env->env);
 	return true;
 }
@@ -99,7 +149,7 @@ int putLog
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
@@ -133,9 +183,18 @@ int putLog
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	if (r)
 	{
-		mdb_txn_abort(env->txn);
-		LOG(ERROR) << ERR_LMDB_PUT << r;
-		return ERRCODE_LMDB_PUT;
+		if (r == MDB_MAP_FULL) 
+		{
+			r = processMapFull(env);
+			if (r == 0)
+				r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		}
+		if (r)
+		{
+			mdb_txn_abort(env->txn);
+			LOG(ERROR) << ERR_LMDB_PUT << r << ": " << mdb_strerror(r) << std::endl;
+			return ERRCODE_LMDB_PUT;
+		}
 	}
 
 	// probe
@@ -146,16 +205,32 @@ int putLog
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	if (r)
 	{
-		mdb_txn_abort(env->txn);
-		LOG(ERROR) << ERR_LMDB_PUT << r;
-		return ERRCODE_LMDB_PUT;
+		if (r == MDB_MAP_FULL) 
+		{
+			r = processMapFull(env);
+			if (r == 0)
+				r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		}
+		if (r)
+		{
+			mdb_txn_abort(env->txn);
+			LOG(ERROR) << ERR_LMDB_PUT_PROBE << r << ": " << mdb_strerror(r) << std::endl;
+			return ERRCODE_LMDB_PUT_PROBE;
+		}
 	}
 
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
-		return ERRCODE_LMDB_TXN_COMMIT;
+		if (r == MDB_MAP_FULL) 
+		{
+			r = processMapFull(env);
+		}
+		if (r)
+		{
+			LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << ": " << mdb_strerror(r) << std::endl;
+			return ERRCODE_LMDB_TXN_COMMIT;
+		}
 	}
 	return r;
 }
@@ -177,7 +252,7 @@ int putLogEntries
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
@@ -211,10 +286,16 @@ int putLogEntries
 				<< std::endl;
 
 		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		if (r == MDB_MAP_FULL) 
+		{
+			r = processMapFull(env);
+			if (r == 0)
+				r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		}
 		if (r)
 		{
 			mdb_txn_abort(env->txn);
-			LOG(ERROR) << ERR_LMDB_PUT << r;
+			LOG(ERROR) << ERR_LMDB_PUT << r << ": " << mdb_strerror(r) << std::endl;
 			return ERRCODE_LMDB_PUT;
 		}
 
@@ -224,6 +305,18 @@ int putLogEntries
 		dbdata.mv_size = sizeof(key.dt); 
 		dbdata.mv_data = &(key.dt);
 		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		if (r == MDB_MAP_FULL) 
+		{
+			r = processMapFull(env);
+			if (r == 0)
+				r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+		}
+		if (r)
+		{
+			mdb_txn_abort(env->txn);
+			LOG(ERROR) << ERR_LMDB_PUT_PROBE << r << ": " << mdb_strerror(r) << std::endl;
+			return ERRCODE_LMDB_PUT_PROBE;
+		}
 		
 		c++;
 	}
@@ -231,14 +324,14 @@ int putLogEntries
 	if (r)
 	{
 		mdb_txn_abort(env->txn);
-		LOG(ERROR) << ERR_LMDB_PUT << r;
-		return ERRCODE_LMDB_PUT;
+		LOG(ERROR) << ERR_LMDB_PUT_PROBE << r << ": " << mdb_strerror(r) << std::endl;
+		return ERRCODE_LMDB_PUT_PROBE;
 	}
 
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r;
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT  << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_COMMIT;
 	}
 	return c;
@@ -278,7 +371,7 @@ int readLog
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
@@ -314,14 +407,14 @@ int readLog
 	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
@@ -370,7 +463,7 @@ int readLog
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_COMMIT;
 	}
 	return r;
@@ -397,7 +490,7 @@ int rmLog
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 
@@ -431,14 +524,14 @@ int rmLog
 	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
@@ -559,14 +652,14 @@ int readLastProbe
 	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
@@ -637,14 +730,14 @@ int getNotification
 	int r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_FIRST);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
@@ -697,6 +790,17 @@ int putNotification
 		r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
 	else
 		r = mdb_del(env->txn, env->dbi, &dbkey, 0);
+	if (r == MDB_MAP_FULL) 
+	{
+		r = processMapFull(env);
+		if (r == 0)
+		{
+			if (value.size())
+				r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+			else
+				r = mdb_del(env->txn, env->dbi, &dbkey, 0);
+		}
+	}
 	if (r)
 	{
 		mdb_txn_abort(env->txn);
@@ -751,14 +855,14 @@ int lsNotification
 	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
 	if (r != MDB_SUCCESS) 
 	{
-		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << strerror(r) << std::endl;
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
 	if (r != MDB_SUCCESS) 
 	{
-		// LOG(ERROR) << ERR_LMDB_GET << r << ": " << strerror(r) << std::endl;
+		// LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_abort(env->txn);
 		return r;
 	}
@@ -774,7 +878,7 @@ int lsNotification
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
-		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << ": " << mdb_strerror(r) << std::endl;
 		return ERRCODE_LMDB_TXN_COMMIT;
 	}
 	return r;

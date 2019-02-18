@@ -575,8 +575,52 @@ or
 ./wacsc notification-put 11:22:33:44:55:66 -l notification.sample.json
 ```
 
+## Error codes
 
+COMMAND							-1
+PARSE_COMMAND					-2
+WRONG_PARAM						-3
 
+LMDB_TXN_BEGIN					-10
+LMDB_TXN_COMMIT					-11
+LMDB_OPEN						-12
+LMDB_CLOSE						-13
+LMDB_PUT						-14
+LMDB_PUT_PROBE					-15
+LMDB_GET						-16
+
+NN_SOCKET						-20
+NN_CONNECT	 					-21
+NN_BIND		 					-22
+NN_SUBSCRIBE					-23
+NN_SHUTDOWN 					-24
+NN_RECV							-25
+NN_SEND							-26
+NN_SET_SOCKET_OPTION			-27
+NN_FREE_MSG						-28
+NN_ACCEPT						-29
+
+STOP							-40
+NO_CONFIG						-41
+NO_MEMORY						-42
+NOT_IMPLEMENTED					-43
+
+SOCKET_SEND						-50
+GET_ADDRINFO                    -51
+SOCKET_CREATE					-52
+SOCKET_SET_OPTIONS				-53
+SOCKET_BIND						-54
+SOCKET_CONNECT                  -55
+SOCKET_LISTEN					-56
+SOCKET_READ						-57
+SOCKET_WRITE					-58
+
+FORK							-60
+EXEC							-61
+CONFIG							-62
+WSA_ERROR						-63
+
+NO_NOBILE_SUBSCRIBERS			-70
 
 ## SNMP settings
 

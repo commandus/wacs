@@ -230,10 +230,14 @@ static std::string lsLog
 {
 	struct ReqEnv env;
 	struct dbenv db;
+	db.path = config->path;
+	db.flags =config->flags;
+	db.mode = config->mode;
+	
 	std::stringstream ss;
 	env.dbEnv = &db;
 	env.retval = &ss;
-	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(env.dbEnv))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return "";
@@ -287,7 +291,11 @@ static int macsPerTime(
 )
 {
 	struct dbenv db;
-	if (!openDb(&db, config->path.c_str(), config->flags, config->mode))
+	db.path = config->path;
+	db.flags =config->flags;
+	db.mode = config->mode;
+	
+// 	if (!openDb(&db))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -317,6 +325,9 @@ static std::string lsLastProbe
 {
 	struct ReqEnv env;
 	struct dbenv db;
+	db.path = config->path;
+	db.flags =config->flags;
+	db.mode = config->mode;
 	std::stringstream ss;
 	env.dbEnv = &db;
 	env.retval = &ss;
@@ -326,7 +337,7 @@ static std::string lsLastProbe
 	env.count = params->count == 0 ? config->count: params->count;
 	env.sum = 0;
 
-	if (!openDb(env.dbEnv, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(env.dbEnv))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return "";

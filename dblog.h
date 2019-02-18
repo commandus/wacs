@@ -23,16 +23,20 @@
 #define mdb_txn_commit mdbx_txn_commit
 #define mdb_txn_abort mdbx_txn_abort
 #define mdb_strerror mdbx_strerror
-#define mdb_open mdbx_dbi_open
-#define mdb_close mdbx_dbi_close
+#define mdb_dbi_open mdbx_dbi_open
+#define mdb_dbi_close mdbx_dbi_close
 #define mdb_put mdbx_put
 #define mdb_del mdbx_del
 #define mdb_cursor_open mdbx_cursor_open
 #define mdb_cursor_get mdbx_cursor_get
 #define mdb_cursor_del mdbx_cursor_del
-
+#define MDB_envinfo MDBX_envinfo
+#define mdb_env_info mdbx_env_info
+#define mdb_env_set_mapsize mdbx_env_set_mapsize
+#define me_mapsize mi_mapsize
 #define mv_size iov_len
 #define mv_data iov_base
+#define MDB_MAP_FULL MDBX_MAP_FULL
 
 #endif
 
@@ -44,6 +48,10 @@ typedef struct dbenv {
 	MDB_dbi dbi;
 	MDB_txn *txn;
 	MDB_cursor *cursor;
+	// open db options
+	std::string path;
+	int flags;
+	int mode;
 } dbenv;
 
 typedef struct 
@@ -81,10 +89,7 @@ typedef struct
  */
 bool openDb
 (
-	struct dbenv *env,
-	const char *path,
-	int flags,
-	int mode
+	struct dbenv *env
 );
 
 /**

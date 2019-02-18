@@ -190,8 +190,12 @@ static int lsLog
 )
 {
 	struct dbenv env;
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+
 	int rr = 0;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -222,8 +226,12 @@ static int rmLog
 )
 {
 	struct dbenv env;
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
 	int rr = 0;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -304,7 +312,11 @@ static int loadLog
 )
 {
 	struct dbenv env;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -334,8 +346,12 @@ static int lsLastProbe
 )
 {
 	struct dbenv env;
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
 	int r = 0;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -362,8 +378,12 @@ static int macsPerTime
 )
 {
 	struct dbenv env;
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
 	int r = 0;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -389,7 +409,11 @@ static int notificationList
 )
 {
 	struct dbenv env;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -443,7 +467,11 @@ static int notificationPut
 		return ERRCODE_WRONG_PARAM;
 
 	struct dbenv env;
-	if (!openDb(&env, config->path.c_str(), config->flags, config->mode))
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
+	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
