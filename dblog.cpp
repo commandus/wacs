@@ -74,7 +74,7 @@ bool openDb
 	int rc = mdb_env_create(&env->env);
 	if (rc)
 	{
-		LOG(ER/*R*/OR) << "mdb_env_create error " << rc << ": " << mdb_strerror(rc) << std::endl;
+		LOG(ERROR) << "mdb_env_create error " << rc << ": " << mdb_strerror(rc) << std::endl;
 		env->env = NULL;
 		return false;
 	}
@@ -94,7 +94,6 @@ bool openDb
 		env->env = NULL;
 		return false;
 	}
-
 
 	rc = mdb_dbi_open(env->txn, NULL, 0, &env->dbi);
 	if (rc)

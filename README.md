@@ -575,6 +575,15 @@ or
 ./wacsc notification-put 11:22:33:44:55:66 -l notification.sample.json
 ```
 
+## Checking map size
+
+```
+mdbx_stat -e  .
+Environment Info
+...
+Current mapsize: 33554432 bytes, 8192 pages
+```
+
 ## Error codes
 
 COMMAND							-1

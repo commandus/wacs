@@ -1,8 +1,8 @@
 SUBDIRS = .
 
 # Uncomment for debug
-CFLAGS=-g -O0
-CXXFLAGS=-g -O0
+# CFLAGS=-g -O0
+# CXXFLAGS=-g -O0
 
 AM_CXXFLAGS = -std=c++11 
 
