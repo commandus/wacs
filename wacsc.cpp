@@ -531,7 +531,8 @@ static int notificationRm
 			cnt = r;
 			break;
 		}
-		cnt++;
+		if (r > 0)
+			cnt += r;
 	}
 
 	if (!closeDb(&env))

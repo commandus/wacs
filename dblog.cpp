@@ -927,6 +927,8 @@ int rmNotification
 	{
 		// LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
 		mdb_txn_abort(env->txn);
+		if (r == MDB_NOTFOUND)
+			return 0;
 		return r;
 	}
 
@@ -934,9 +936,9 @@ int rmNotification
 	do {
 		if (dbkey.mv_size < 6)
 			break;
-		if (((LastProbeKey *) &dbkey)->tag != 'T')
+		if (((LastProbeKey *) dbkey.mv_data)->tag != 'T')
 			break;
-		if (memcmp(((LastProbeKey *) &dbkey)->sa, sa, sz) != 0)
+		if (memcmp(((LastProbeKey *) dbkey.mv_data)->sa, sa, sz) != 0)
 			break;
 		mdb_cursor_del(cursor, 0);
 		cnt++;

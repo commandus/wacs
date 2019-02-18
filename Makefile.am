@@ -18,7 +18,7 @@ lib_LIBRARIES = \
 lib_LTLIBRARIES = \
 	libwacs.la
 
-commoncppflags = -O2 -I/usr/local/include -Ithird_party
+commoncppflags = -O2 -I/usr/local/include -Ithird_party -Ithird_party/ecec
 
 commonlibs = -L.
 
