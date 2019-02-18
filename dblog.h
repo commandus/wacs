@@ -249,6 +249,17 @@ int putNotification
 );
 
 /**
+ * Remove notification JSON string 
+ * @return 0 - success
+ */
+int rmNotification
+(
+	struct dbenv *env,
+	const uint8_t *sa,
+	int sa_size
+);
+
+/**
  * List notification JSON string 
  * @param value return notification JSON string 
  * @return 0 - success

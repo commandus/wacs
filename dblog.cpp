@@ -882,3 +882,71 @@ int lsNotification
 	}
 	return r;
 }
+
+/**
+ * Remove notification JSON string 
+ * @return 0 - success
+ */
+int rmNotification
+(
+	struct dbenv *env,
+	const uint8_t *sa,
+	int sa_size
+)
+{
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r << std::endl;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	LastProbeKey key;
+	key.tag = 'T';
+
+	memset(key.sa, 0, 6);
+	int sz = sa_size < 6 ? sa_size : 6;
+	memmove(key.sa, sa, sz);
+	MDB_val dbkey;
+	dbkey.mv_size = sizeof(key.tag) + sz;
+	dbkey.mv_data = &key;
+
+	// Get the last key
+	MDB_cursor *cursor;
+	MDB_val dbval;
+	r = mdb_cursor_open(env->txn, env->dbi, &cursor);
+	if (r != MDB_SUCCESS) 
+	{
+		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
+		mdb_txn_commit(env->txn);
+		return r;
+	}
+	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_SET_RANGE);
+	if (r != MDB_SUCCESS) 
+	{
+		// LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
+		mdb_txn_abort(env->txn);
+		return r;
+	}
+
+	int cnt = 0;
+	do {
+		if (dbkey.mv_size < 6)
+			break;
+		if (((LastProbeKey *) &dbkey)->tag != 'T')
+			break;
+		if (memcmp(((LastProbeKey *) &dbkey)->sa, sa, sz) != 0)
+			break;
+		mdb_cursor_del(cursor, 0);
+		cnt++;
+	} while (mdb_cursor_get(cursor, &dbkey, &dbval, MDB_NEXT) == MDB_SUCCESS);
+
+	r = mdb_txn_commit(env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << ": " << mdb_strerror(r) << std::endl;
+		return ERRCODE_LMDB_TXN_COMMIT;
+	}
+	return r == 0 ? cnt : r;
+}

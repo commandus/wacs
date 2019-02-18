@@ -501,6 +501,47 @@ static int notificationPut
 	return cnt;
 }
 
+/**
+ * Remove notification JSON
+ */
+static int notificationRm
+(
+	WacscConfig *config
+)
+{
+	struct dbenv env;
+	env.path = config->path;
+	env.flags =config->flags;
+	env.mode = config->mode;
+	
+	if (!openDb(&env))
+	{
+		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
+		return ERRCODE_LMDB_OPEN;
+	}
+
+	int r, cnt = 0;
+	for (std::vector<std::string>::const_iterator it(config->mac.begin()); it != config->mac.end(); ++it)
+	{
+		uint8_t sa[6];
+		int macSize = strtomacaddress(&sa, *it);
+		r = rmNotification(&env, sa, macSize);
+		if (r != 0)
+		{
+			cnt = r;
+			break;
+		}
+		cnt++;
+	}
+
+	if (!closeDb(&env))
+	{
+		std::cerr << ERR_LMDB_CLOSE << config->path << std::endl;
+		return ERRCODE_LMDB_CLOSE;
+	}
+	return cnt;
+}
+
 int main(int argc, char** argv)
 {
 	// Signal handler
@@ -593,6 +634,15 @@ int main(int argc, char** argv)
 				std::cerr << "Error " << c << std::endl;
 			else
 				std::cout << c << " records added." << std::endl;
+		}
+		break;
+	case CMD_LOG_NOTIFICATION_RM:
+		{
+			int c = notificationRm(config);
+			if (c < 0)
+				std::cerr << "Error " << c << std::endl;
+			else
+				std::cout << c << " records removed." << std::endl;
 		}
 		break;
 	default:

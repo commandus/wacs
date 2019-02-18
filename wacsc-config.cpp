@@ -69,6 +69,8 @@ static int parseCommand
 		return CMD_LOG_NOTIFICATION;
 	if (v == "notification-put")
 		return CMD_LOG_NOTIFICATION_PUT;
+	if (v == "notification-rm")
+		return CMD_LOG_NOTIFICATION_RM;
 	return CMD_NONE;
 }
 
@@ -84,7 +86,7 @@ int WacscConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: log|probe|log-count|probe-count|macs-per-time|test|remove|log-read|notification|notification-put");
+	struct arg_str *a_cmd = arg_str1(NULL, NULL, "<cmd>", "Commands: log|probe|log-count|probe-count|macs-per-time|test|remove|log-read|notification|notification-put|notification-rm");
 	struct arg_int *a_repeats = arg_int0("n", "repeats", "<number>", "for test command. Default 1");
 	// filter
 	// MAC address
