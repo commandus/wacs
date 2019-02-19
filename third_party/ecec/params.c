@@ -409,7 +409,8 @@ ece_webpush_aesgcm_headers_extract_params(const char* cryptoKeyHeader,
     err = ECE_ERROR_INVALID_ENCRYPTION_HEADER;
     goto end;
   }
-  for (ece_header_pairs_t* pair = encryptionParams->pairs; pair;
+ece_header_pairs_t* pair = NULL;
+  for (pair = encryptionParams->pairs; pair;
        pair = pair->next) {
     if (ece_header_pairs_has_name(pair, "keyid")) {
       // The key ID is optional, and is used to identify the public key in the
@@ -484,7 +485,8 @@ ece_webpush_aesgcm_headers_extract_params(const char* cryptoKeyHeader,
     // there's only one key, and use the first one we see.
     while (cryptoKeyParam) {
       bool keyIdMatches = false;
-      for (ece_header_pairs_t* pair = cryptoKeyParam->pairs; pair;
+      ece_header_pairs_t* pair = NULL;
+      for (pair = cryptoKeyParam->pairs; pair;
            pair = pair->next) {
         if (!ece_header_pairs_has_name(pair, "keyid")) {
           continue;
@@ -505,7 +507,8 @@ ece_webpush_aesgcm_headers_extract_params(const char* cryptoKeyHeader,
       goto end;
     }
   }
-  for (ece_header_pairs_t* pair = cryptoKeyParam->pairs; pair;
+  //ece_header_pairs_t* pair = NULL;
+  for (pair = cryptoKeyParam->pairs; pair;
        pair = pair->next) {
     if (!ece_header_pairs_has_name(pair, "dh")) {
       continue;

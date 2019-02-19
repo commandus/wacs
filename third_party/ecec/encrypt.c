@@ -118,8 +118,8 @@ ece_aes128gcm_encrypt_block(EVP_CIPHER_CTX* ctx, const uint8_t* blockPlaintext,
                         ECE_AES128GCM_PAD_SIZE) != 1) {
     return ECE_ERROR_ENCRYPT;
   }
-
-  for (size_t i = 0; i < blockPadLen; i++) {
+  size_t i = 0;
+  for (i = 0; i < blockPadLen; i++) {
     if (EVP_EncryptUpdate(
           ctx, &record[blockPlaintextLen + ECE_AES128GCM_PAD_SIZE + i],
           &chunkLen, &pad, 1) != 1) {
@@ -148,8 +148,8 @@ ece_aesgcm_encrypt_block(EVP_CIPHER_CTX* ctx, const uint8_t* blockPlaintext,
                         ECE_AESGCM_PAD_SIZE) != 1) {
     return ECE_ERROR_ENCRYPT;
   }
-
-  for (size_t i = 0; i < blockPadLen; i++) {
+  size_t i = 0;
+  for (i = 0; i < blockPadLen; i++) {
     if (EVP_EncryptUpdate(ctx, &record[ECE_AESGCM_PAD_SIZE + i], &chunkLen,
                           &pad, 1) != 1) {
       return ECE_ERROR_ENCRYPT;

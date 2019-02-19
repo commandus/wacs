@@ -61,7 +61,8 @@ ece_base64url_encode_quantum(const uint8_t* binary, size_t binaryLen,
   assert(binaryLen <= 3);
 
   uint32_t quantum = 0;
-  for (size_t i = 0; i < binaryLen; i++) {
+  size_t i = 0;
+  for (i = 0; i < binaryLen; i++) {
     quantum <<= 8;
     quantum |= (uint32_t) binary[i];
   }
@@ -165,7 +166,8 @@ ece_base64url_decode_quantum(const char* base64, size_t base64Len,
   assert(base64Len <= 4);
 
   uint32_t quantum = 0;
-  for (size_t i = 0; i < base64Len; i++) {
+  size_t i = 0;
+  for (i = 0; i < base64Len; i++) {
     uint8_t b = ece_base64url_decode_byte(base64[i]);
     if (b == ECE_BASE64URL_INVALID_CHAR) {
       return false;

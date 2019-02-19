@@ -112,8 +112,8 @@ ece_decrypt_records(const uint8_t* key, const uint8_t* nonce, uint32_t rs,
 
   // The offset at which to start writing the plaintext.
   size_t plaintextStart = 0;
-
-  for (size_t counter = 0; ciphertextStart < ciphertextLen; counter++) {
+  size_t counter = 0;
+  for (counter = 0; ciphertextStart < ciphertextLen; counter++) {
     size_t ciphertextEnd;
     if (rs > ciphertextLen - ciphertextStart) {
       // This check is equivalent to `ciphertextStart + rs > ciphertextLen`;
@@ -244,8 +244,8 @@ ece_aesgcm_unpad(uint8_t* block, bool lastRecord, size_t* blockLen) {
     return ECE_ERROR_DECRYPT_PADDING;
   }
   size_t plaintextStart = ECE_AESGCM_PAD_SIZE + padLen;
-
-  for (size_t i = ECE_AESGCM_PAD_SIZE; i < plaintextStart; i++) {
+  size_t i = 0;
+  for (i = ECE_AESGCM_PAD_SIZE; i < plaintextStart; i++) {
     if (block[i]) {
       // All padding bytes must be zero.
       return ECE_ERROR_DECRYPT_PADDING;
