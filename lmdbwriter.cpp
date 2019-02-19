@@ -13,6 +13,10 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/bus.h>
 
+// MQ
+#include <sys/ipc.h> 
+#include <sys/msg.h> 
+
 #include "errorcodes.h"
 #include "lmdbwriter.h"
 
@@ -74,6 +78,11 @@ int run
 {
 START:
 	snmpInitialize(config);
+	// ftok to generate unique key 
+	int mqKey = ftok("wacs", 66); 
+	// msgget creates a message queue and returns identifier 
+	config->queue = msgget(mqKey, 0666 | IPC_CREAT); 
+
 	config->stop_request = 0;
 	int accept_socket = nn_socket(AF_SP, NN_BUS);
 	int eid = nn_bind(accept_socket, config->message_url.c_str());
@@ -92,10 +101,7 @@ START:
 		return ERRCODE_NN_BIND;
 	}
 
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
+	dbenv env(config->path, config->flags, config->mode, config->queue);
 	if (!openDb(&env))
 	{
 		LOG(ERROR) << ERR_LMDB_OPEN << config->path << std::endl;
@@ -150,6 +156,11 @@ START:
 	nn_close(accept_socket);
 	accept_socket = 0;
 	snmpDone(config);
+	if (config->queue)
+	{
+		// to destroy the message queue 
+		msgctl(config->queue, IPC_RMID, NULL); 
+	}
 	return r;
 }
 

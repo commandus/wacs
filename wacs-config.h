@@ -37,6 +37,8 @@ public:
 	std::string path;								///< database files lock.mdb, data.mdb directory path
 	int flags;
 	int mode;
+	int queue;										///< MQ
+
 	bool snmp_agent;
 	bool daemonize;
 	int max_fd;										///< 0- use default max file descriptor count per process

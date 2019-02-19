@@ -189,10 +189,7 @@ static int lsLog
 	void *onLogEnv
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
+	dbenv env(config->path, config->flags, config->mode, 0);
 
 	int rr = 0;
 	if (!openDb(&env))
@@ -225,11 +222,8 @@ static int rmLog
 	WacscConfig *config
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	int rr = 0;
 	if (!openDb(&env))
 	{
@@ -311,11 +305,7 @@ static int loadLog
 	WacscConfig *config
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
 	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -345,11 +335,8 @@ static int lsLastProbe
 	void *onLogEnv
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	int r = 0;
 	if (!openDb(&env))
 	{
@@ -377,11 +364,8 @@ static int macsPerTime
 	WacscConfig *config
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	int r = 0;
 	if (!openDb(&env))
 	{
@@ -408,11 +392,8 @@ static int notificationList
 	WacscConfig *config
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -466,11 +447,8 @@ static int notificationPut
 	if (s.empty())
 		return ERRCODE_WRONG_PARAM;
 
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
@@ -509,11 +487,8 @@ static int notificationRm
 	WacscConfig *config
 )
 {
-	struct dbenv env;
-	env.path = config->path;
-	env.flags =config->flags;
-	env.mode = config->mode;
-	
+	dbenv env(config->path, config->flags, config->mode, 0);
+
 	if (!openDb(&env))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;

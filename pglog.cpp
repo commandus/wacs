@@ -17,7 +17,7 @@
  */
 bool openDb
 (
-	struct dbenv *env
+	dbenv *env
 )
 {
 	if (!env->dbconn.empty())
@@ -35,7 +35,7 @@ bool openDb
  */
 bool closeDb
 (
-	struct dbenv *env
+	dbenv *env
 )
 {
 	PQfinish(env->conn);
@@ -60,7 +60,7 @@ bool closeDb
  */
 int putLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	void *buffer,
 	size_t size,
 	int verbosity
@@ -99,7 +99,7 @@ int putLog
  */
 int putLogEntries
 (
-	struct dbenv *env,
+	dbenv *env,
 	int verbosity,
 	OnPutLogEntry onPutLogEntry,
 	void *onPutLogEntryEnv
@@ -144,7 +144,7 @@ int putLogEntries
  */
 int readLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			// MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -221,7 +221,7 @@ int readLog
  */
 int rmLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			// MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -242,7 +242,7 @@ int rmLog
  */
 int readLastProbe
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address filter
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -264,7 +264,7 @@ int readLastProbe
 int getNotification
 (
 	std::string &retval,
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa			///< MAC address
 )
 {
@@ -278,7 +278,7 @@ int getNotification
  */
 int putNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	const std::string &value
 )
@@ -293,7 +293,7 @@ int putNotification
  */
 int lsNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	OnNotification onNotification,
 	void *onNotificationEnv
 )
@@ -307,7 +307,7 @@ int lsNotification
  */
 int rmNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,
 	int sa_size
 )

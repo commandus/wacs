@@ -20,8 +20,7 @@
 
 WacsHttpConfig::WacsHttpConfig()
 	: errorcode(0), port(DEF_PORT), verbosity(0), 
-	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath()), count(0)
-
+	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath()), count(0), queue(0)
 {
 }
 	

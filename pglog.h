@@ -5,7 +5,8 @@
  * @brief PostgreSQL environment(transaction, cursor)
  */
 
-typedef struct dbenv {
+class dbenv {
+public:	
 	PGconn *conn;
 	// PostgreSQL options 
 	std::string dbconn;
@@ -18,7 +19,7 @@ typedef struct dbenv {
 	std::string dbsocket;
 	std::string dbcharset;
 	int dbclientflags;
-} dbenv;
+};
 
 typedef struct 
 {
@@ -48,24 +49,24 @@ typedef struct
 } LogRecord;
 
 /**
- * @brief Opens LMDB database file
- * @param env created LMDB environment(transaction, cursor)
+ * @brief Open PostgreSQL database file
+ * @param env created PostgreSQL environment(transaction, cursor)
  * @param config pass path, flags, file open mode
  * @return true- success
  */
 bool openDb
 (
-	struct dbenv *env
+	dbenv *env
 );
 
 /**
- * @brief Close LMDB database file
+ * @brief Close PostgreSQL database file
  * @param config pass path, flags, file open mode
  * @return true- success
  */
 bool closeDb
 (
-	struct dbenv *env
+	dbenv *env
 );
 
 // callback, return true - stop request, false- continue
@@ -102,20 +103,20 @@ typedef bool (*OnNotification)
 );
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Store input log data to the PostgreSQL
  * @param env database env
  * @return 0 - success
  */
 int putLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	void *buffer,
 	size_t size,
 	int verbosity
 );
 
 /**
- * @brief Store input log data to the LMDB
+ * @brief Store input log data to the PostgreSQL
  * @param env database env
  * @param buffer buffer (LogEntry: device_id(0..255), ssi_signal(-128..127), MAC(6 bytes)
  * @param size buffer size
@@ -123,14 +124,14 @@ int putLog
  */
 int putLogEntries
 (
-	struct dbenv *env,
+	dbenv *env,
 	int verbosity,
 	OnPutLogEntry onPutLogEntry,
 	void *onPutLogEntryEnv
 );
 
 /**
- * @brief Read log data from the LMDB
+ * @brief Read log data from the PostgreSQL
  * @param env database env
  * @param sa can be NULL
  * @param saSize can be 0 
@@ -141,7 +142,7 @@ int putLogEntries
  */
 int readLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				///< time, seconds since Unix epoch 
@@ -151,7 +152,7 @@ int readLog
 );
 
 /**
- * @brief remove log data from the LMDB
+ * @brief remove log data from the PostgreSQL
  * @param env database env
  * @param sa can be NULL
  * @param saSize can be 0 
@@ -160,7 +161,7 @@ int readLog
  */
 int rmLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				///< time, seconds since Unix epoch 
@@ -168,7 +169,7 @@ int rmLog
 );
 
 /**
- * @brief Read last probes from the LMDB
+ * @brief Read last probes from the PostgreSQL
  * @param env database env
  * @param sa can be NULL
  * @param saSize can be 0
@@ -179,7 +180,7 @@ int rmLog
  */
 int readLastProbe
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -198,7 +199,7 @@ int readLastProbe
 int getNotification
 (
 	std::string &retval,
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa			///< MAC address
 );
 
@@ -209,7 +210,7 @@ int getNotification
  */
 int putNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	const std::string &value
 );
@@ -220,7 +221,7 @@ int putNotification
  */
 int rmNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,
 	int sa_size
 );
@@ -232,7 +233,7 @@ int rmNotification
  */
 int lsNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	OnNotification onNotification,
 	void *onNotificationEnv
 );

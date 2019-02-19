@@ -168,7 +168,7 @@ public:
 
 struct ReqEnv
 {
-	struct dbenv *dbEnv;
+	dbenv *dbEnv;
 	std::stringstream *retval;
 	int sum;
 	size_t position;
@@ -229,11 +229,8 @@ static std::string lsLog
 )
 {
 	struct ReqEnv env;
-	struct dbenv db;
-	db.path = config->path;
-	db.flags =config->flags;
-	db.mode = config->mode;
-	
+	dbenv db(config->path, config->flags, config->mode, config->queue);
+
 	std::stringstream ss;
 	env.dbEnv = &db;
 	env.retval = &ss;
@@ -290,10 +287,7 @@ static int macsPerTime(
 	const RequestParams *params
 )
 {
-	struct dbenv db;
-	db.path = config->path;
-	db.flags =config->flags;
-	db.mode = config->mode;
+	dbenv db(config->path, config->flags, config->mode, config->queue);
 	
 // 	if (!openDb(&db))
 	{
@@ -324,10 +318,7 @@ static std::string lsLastProbe
 )
 {
 	struct ReqEnv env;
-	struct dbenv db;
-	db.path = config->path;
-	db.flags =config->flags;
-	db.mode = config->mode;
+	dbenv db(config->path, config->flags, config->mode, config->queue);
 	std::stringstream ss;
 	env.dbEnv = &db;
 	env.retval = &ss;

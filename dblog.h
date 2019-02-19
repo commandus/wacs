@@ -44,7 +44,8 @@
 /**
  * @brief LMDB environment(transaction, cursor)
  */
-typedef struct dbenv {
+class dbenv {
+public:	
 	MDB_env *env;
 	MDB_dbi dbi;
 	MDB_txn *txn;
@@ -53,7 +54,9 @@ typedef struct dbenv {
 	std::string path;
 	int flags;
 	int mode;
-} dbenv;
+	int queue;
+	dbenv(const	std::string &path, int flags, int mode, int queue);
+};
 
 typedef struct 
 {
@@ -90,7 +93,7 @@ typedef struct
  */
 bool openDb
 (
-	struct dbenv *env
+	dbenv *env
 );
 
 /**
@@ -100,7 +103,7 @@ bool openDb
  */
 bool closeDb
 (
-	struct dbenv *env
+	dbenv *env
 );
 
 // callback, return true - stop request, false- continue
@@ -143,7 +146,7 @@ typedef bool (*OnNotification)
  */
 int putLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	void *buffer,
 	size_t size,
 	int verbosity
@@ -158,7 +161,7 @@ int putLog
  */
 int putLogEntries
 (
-	struct dbenv *env,
+	dbenv *env,
 	int verbosity,
 	OnPutLogEntry onPutLogEntry,
 	void *onPutLogEntryEnv
@@ -176,7 +179,7 @@ int putLogEntries
  */
 int readLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				///< time, seconds since Unix epoch 
@@ -195,7 +198,7 @@ int readLog
  */
 int rmLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				///< time, seconds since Unix epoch 
@@ -214,7 +217,7 @@ int rmLog
  */
 int readLastProbe
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -233,7 +236,7 @@ int readLastProbe
 int getNotification
 (
 	std::string &retval,
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa			///< MAC address
 );
 
@@ -244,7 +247,7 @@ int getNotification
  */
 int putNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	const std::string &value
 );
@@ -255,7 +258,7 @@ int putNotification
  */
 int rmNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,
 	int sa_size
 );
@@ -267,7 +270,7 @@ int rmNotification
  */
 int lsNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	OnNotification onNotification,
 	void *onNotificationEnv
 );

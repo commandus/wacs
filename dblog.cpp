@@ -1,3 +1,4 @@
+#include <sstream>
 #include "dblog.h"
 #include "iostream"
 #include "errorcodes.h"
@@ -5,11 +6,36 @@
 #include <string.h>
 #include <netinet/in.h>
 
+#include <sys/ipc.h> 
+#include <sys/msg.h> 
+
 #include "log.h"
+
+dbenv::dbenv(
+	const std::string &apath,
+	int aflags,
+	int amode,
+	int aqueue
+)
+	: path(apath), flags(aflags), mode(amode), queue(aqueue)
+{ }
+
+static void sendNotification2queue
+(
+	int queue,
+	const uint8_t* sa, 
+	const std::string &json
+)
+{
+	std::stringstream ss;
+	ss << mactostr(sa) << ":" << json;
+	std::string r = ss.str();
+	msgsnd(queue, r.c_str(), r.size(), 0); 
+}
 
 static int processMapFull
 (
-	struct dbenv *env
+	dbenv *env
 )
 {
 	int r = mdb_txn_abort(env->txn);
@@ -68,7 +94,7 @@ static int processMapFull
  */
 bool openDb
 (
-	struct dbenv *env
+	dbenv *env
 )
 {
 	int rc = mdb_env_create(&env->env);
@@ -108,6 +134,13 @@ bool openDb
 	return rc == 0;
 }
 
+static int doGetNotification
+(
+	std::string &retval,
+	dbenv *env,
+	const uint8_t *sa			///< MAC address
+);
+
 /**
  * @brief Close LMDB database file
  * @param config pass path, flags, file open mode
@@ -115,7 +148,7 @@ bool openDb
  */
 bool closeDb
 (
-	struct dbenv *env
+	dbenv *env
 )
 {
 	mdb_dbi_close(env->env, env->dbi);
@@ -132,7 +165,7 @@ bool closeDb
  */
 int putLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	void *buffer,
 	size_t size,
 	int verbosity
@@ -218,6 +251,14 @@ int putLog
 		}
 	}
 
+	// send notification n
+	std::string n;
+	int rr = doGetNotification(n, env, key.sa);
+	if (rr == 0)	// if sa exists in the notification list
+	{
+		sendNotification2queue(env->queue, key.sa, n);
+	}
+
 	r = mdb_txn_commit(env->txn);
 	if (r)
 	{
@@ -241,7 +282,7 @@ int putLog
  */
 int putLogEntries
 (
-	struct dbenv *env,
+	dbenv *env,
 	int verbosity,
 	OnPutLogEntry onPutLogEntry,
 	void *onPutLogEntryEnv
@@ -348,7 +389,7 @@ int putLogEntries
  */
 int readLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			// MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -478,7 +519,7 @@ int readLog
  */
 int rmLog
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			// MAC address
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -600,7 +641,7 @@ int rmLog
  */
 int readLastProbe
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address filter
 	int saSize,
 	time_t start,				// time, seconds since Unix epoch 
@@ -705,14 +746,14 @@ int readLastProbe
 // Notification database routines 
 
 /**
- * Get notification JSON string into retval
+ * Get notification JSON string into retval in transaction
  * @param retval return value
  * @return empty string if not found
  */
-int getNotification
+static int doGetNotification
 (
 	std::string &retval,
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa			///< MAC address
 )
 {
@@ -730,21 +771,46 @@ int getNotification
 	if (r != MDB_SUCCESS) 
 	{
 		LOG(ERROR) << ERR_LMDB_OPEN << r << ": " << mdb_strerror(r) << std::endl;
-		mdb_txn_commit(env->txn);
 		return r;
 	}
 	r = mdb_cursor_get(cursor, &dbkey, &dbval, MDB_FIRST);
 	if (r != MDB_SUCCESS) 
 	{
 		LOG(ERROR) << ERR_LMDB_GET << r << ": " << mdb_strerror(r) << std::endl;
-		mdb_txn_commit(env->txn);
 		return r;
 	}
 
 	if (dbval.mv_size)
 		retval = std::string((const char *) dbval.mv_data, dbval.mv_size);
 
-	r = mdb_txn_commit(env->txn);
+	return 0;
+}
+
+/**
+ * Get notification JSON string into retval
+ * @param retval return value
+ * @return empty string if not found
+ */
+int getNotification
+(
+	std::string &retval,
+	dbenv *env,
+	const uint8_t *sa			///< MAC address
+)
+{
+	// start transaction
+	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+	{
+		LOG(ERROR) << ERR_LMDB_TXN_BEGIN << r;
+		return ERRCODE_LMDB_TXN_BEGIN;
+	}
+
+	r = doGetNotification(retval, env, sa);
+	if (r < 0)
+		r = mdb_txn_abort(env->txn);
+	else
+		r = mdb_txn_commit(env->txn);
 	if (r)
 	{
 		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;
@@ -760,7 +826,7 @@ int getNotification
  */
 int putNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,			///< MAC address
 	const std::string &value
 )
@@ -822,7 +888,7 @@ int putNotification
  */
 int lsNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	OnNotification onNotification,
 	void *onNotificationEnv
 )
@@ -889,7 +955,7 @@ int lsNotification
  */
 int rmNotification
 (
-	struct dbenv *env,
+	dbenv *env,
 	const uint8_t *sa,
 	int sa_size
 )
