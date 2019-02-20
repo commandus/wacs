@@ -42,7 +42,9 @@ static int processMapFull
 	if (r)
 	{
 		LOG(ERROR) << "map full, abort transaction error " << r << ": " << mdb_strerror(r) << std::endl;
-		return r;
+		// commented 20190220 ai
+		// map full, abort transaction error -30416: MDBX_THREAD_MISMATCH: A thread has attempted to use a not owned object, e.g. a transaction that started by another thread
+		// return r;
 	}
 	struct MDB_envinfo current_info;
 	r = mdb_env_info(env->env, &current_info, sizeof(current_info));
