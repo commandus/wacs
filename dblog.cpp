@@ -154,6 +154,9 @@ bool closeDb
 	return true;
 }
 
+#define DBG(n) 
+//#define DBG(n) if (verbosity > 3)	LOG(INFO) << "putLog " << n << std::endl;
+
 /**
  * @brief Store input packet to the LMDB
  * @param env database env
@@ -169,19 +172,27 @@ int putLog
 	int verbosity
 )
 {
+DBG(0)	
 	if (size < sizeof(LogEntry))
 		return ERRCODE_NO_MEMORY;
+DBG(1)
 	LogEntry *entry = (LogEntry *) buffer;
 	// swap bytes if needed
 	ntohLogEntry(entry);
-
+DBG(2)
 	// start transaction
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-		return ERRCODE_LMDB_TXN_BEGIN;
+DBG(r)
+		if (r == MDB_BUSY) 
+		{
+			// TODO
+		}
+		if (r)
+			return ERRCODE_LMDB_TXN_BEGIN;
 	}
-
+DBG(3)
 	// log
 	LogKey key;
 	key.tag = 'L';
@@ -189,27 +200,29 @@ int putLog
 	key.dt = htobe32(time(NULL));
 #else
 	key.dt = time(NULL);
-#endif	
+#endif
+DBG(4)	
 	memmove(key.sa, entry->sa, 6);
 	MDB_val dbkey;
 	dbkey.mv_size = sizeof(LogKey);
 	dbkey.mv_data = &key;
-
+DBG(5)
 	LogData data;
 	data.device_id = entry->device_id;
 	data.ssi_signal = entry->ssi_signal;
 	MDB_val dbdata;
 	dbdata.mv_size = sizeof(LogData);
 	dbdata.mv_data = &data;
-	
+DBG(6)
 	if (verbosity > 2)
 		LOG(INFO) << MSG_RECEIVED << size 
 			<< ", MAC: " << mactostr(key.sa)
 			<< ", device_id: " << entry->device_id
 			<< ", ssi_signal: " << (int) entry->ssi_signal
 			<< std::endl;
-
+DBG(7)
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+DBG(8)	
 	if (r)
 	{
 		if (r == MDB_MAP_FULL) 
@@ -225,13 +238,15 @@ int putLog
 			return ERRCODE_LMDB_PUT;
 		}
 	}
-
+DBG(9)
 	// probe
 	key.tag = 'P';
 	dbkey.mv_size = sizeof(LastProbeKey);
 	dbdata.mv_size = sizeof(key.dt); 
 	dbdata.mv_data = &(key.dt);
+DBG(10)	
 	r = mdb_put(env->txn, env->dbi, &dbkey, &dbdata, 0);
+DBG(11)	
 	if (r)
 	{
 		if (r == MDB_MAP_FULL) 
@@ -247,7 +262,8 @@ int putLog
 			return ERRCODE_LMDB_PUT_PROBE;
 		}
 	}
-
+/*	
+ * TODO BUGBUG 20190221 ai
 	// send notification n
 	std::string n;
 	int rr = doGetNotification(n, env, key.sa);
@@ -255,8 +271,10 @@ int putLog
 	{
 		sendNotification2queue(env->queue, key.sa, n);
 	}
-
+*/	
+DBG(13)
 	r = mdb_txn_commit(env->txn);
+DBG(14)	
 	if (r)
 	{
 		if (r == MDB_MAP_FULL) 
@@ -269,6 +287,7 @@ int putLog
 			return ERRCODE_LMDB_TXN_COMMIT;
 		}
 	}
+DBG(15)	
 	return r;
 }
 

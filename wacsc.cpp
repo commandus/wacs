@@ -98,13 +98,18 @@ static int sendTest
 	value.device_id = config->device_id;
 	value.ssi_signal = config->ssi_signal;
 	int r;
-	for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+	for (int i = 0; i < config->repeats; i++)
 	{
-		int macSize = strtomacaddress(&value.sa, *it);
-		if (macSize == 6)
-			r = sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
-		else
-			return ERRCODE_WRONG_PARAM;
+		for (std::vector<std::string>::const_iterator it (config->mac.begin()); it != config->mac.end(); ++it)
+		{
+			int macSize = strtomacaddress(&value.sa, *it);
+			if (macSize == 6)
+				r = sendLogEntry(config->message_url, &value, config->repeats, config->verbosity);
+			else
+				return ERRCODE_WRONG_PARAM;
+			if (reqEnv.interruptFlag)
+				return 0;
+		}
 	}
 	return r;
 }

@@ -11,6 +11,7 @@
 #define MDB_PREV MDBX_PREV
 #define MDB_SUCCESS MDBX_SUCCESS
 #define MDB_NOTFOUND MDBX_NOTFOUND
+#define MDB_BUSY MDBX_BUSY
 #define MDB_cursor_op MDBX_cursor_op
 #define MDB_env	MDBX_env
 #define MDB_dbi	MDBX_dbi
