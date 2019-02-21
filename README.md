@@ -9,7 +9,11 @@
 [Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
 
 ## INSTALL
-
+```
+./autogen.sh
+./configure CFLAGS='-I/WHICHOPENNSSLDIR/openssl/include' LDFLAGS='-L/WHICHOPENNSSLDIR/openssl'
+make
+```
 
 
 ## hostapd config
