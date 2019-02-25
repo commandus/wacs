@@ -289,7 +289,7 @@ static int macsPerTime(
 {
 	dbenv db(config->path, config->flags, config->mode, config->queue);
 	
-// 	if (!openDb(&db))
+ 	if (!openDb(&db))
 	{
 		std::cerr << ERR_LMDB_OPEN << config->path << std::endl;
 		return ERRCODE_LMDB_OPEN;
@@ -514,8 +514,13 @@ static int httpHandler
 	case RT_MACS_PER_TIME:
 		{
 			HistogramMacsPerTime histogram(params.start, params.finish, params.step);
-			if (macsPerTime(&histogram, env->config, &params))
-				data = "Error";
+			int r = macsPerTime(&histogram, env->config, &params);
+			if (r)
+			{
+				std::stringstream ss;
+				ss <<  "Error :" << r;
+				data = ss.str();
+			}
 			else
 				data = histogram.toJSON();
 		}
