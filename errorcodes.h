@@ -27,6 +27,8 @@
 #define MSG_CONNECTED_TO						"Connected to: "
 #define MSG_SENT								"Sent bytes: "
 #define MSG_RECEIVED							"Received bytes: "
+#define MSG_ADDED								"added successfully "
+#define MSG_PUT_ERROR							"put entry error "
 #define MSG_NN_BIND_SUCCESS						"nanomsg socket bind successfully to "
 #define MSG_NN_SENT_SUCCESS						"nanomsg socket sent data successfully to "
 #define MSG_PACKET_REJECTED						"packet rejected: "

@@ -130,7 +130,15 @@ START:
 		{
 			if (config->verbosity > 2)
 				LOG(INFO) << MSG_RECEIVED << bytes << std::endl;
-			putLog(&env, &e, bytes, config->verbosity);
+			int rr = putLog(&env, &e, bytes, config->verbosity);
+			if (rr == 0) 
+			{
+				if (config->verbosity > 3)
+					LOG(INFO) << MSG_ADDED << std::endl;
+			}
+			else
+				LOG(ERROR) << MSG_PUT_ERROR << rr << std::endl;
+				
 #ifdef USE_SNMP
 			if ((config->counter != NULL) && config->snmp_agent)
 				config->counter->put(&e);
