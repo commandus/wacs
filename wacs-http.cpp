@@ -127,6 +127,10 @@ int main(int argc, char** argv)
 		if (config->max_fd > 0)
 			Daemonize::setFdLimit(config->max_fd);
 		runner();
+		if (reslt) 
+		{
+			std::cerr << ERR_EXEC << reslt << std::endl;
+		}
 		done();
 	}
 	return reslt;

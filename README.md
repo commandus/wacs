@@ -78,7 +78,21 @@ Start HTTP server:
 nohup ./wacs-http -p 55550 &
 ```
 
-Get list of all MAC addresses:
+Start HTTPS server:
+
+```
+nohup ./wacs-http --crt wacs-http.pem --key wacs-http.key &
+```
+
+### Generate self-signed SSL ceriticates
+
+```
+cd tools
+./gen-cert.sh
+```
+produces wacs-http.pem wacs-http.key files.
+
+### Get list of all MAC addresses:
 
 ```
 wget http://127.0.0.1:55550/last

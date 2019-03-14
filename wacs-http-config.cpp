@@ -20,7 +20,8 @@
 
 WacsHttpConfig::WacsHttpConfig()
 	: errorcode(0), port(DEF_PORT), verbosity(0), 
-	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath()), count(0), queue(0)
+	path(getDefaultDatabasePath()), root_path(getDefaultDatabasePath()), count(0), queue(0),
+	pemkey(""), pemcrt("")
 {
 }
 	
@@ -60,6 +61,10 @@ int WacsHttpConfig::parseCmd
 	struct arg_lit *a_daemonize = arg_lit0("d", "daemonize", "Start as daemon/service");
 	struct arg_int *a_max_fd = arg_int0(NULL, "maxfd", "<number>", "Set max file descriptors. 0- use default (1024).");
 
+	// SSL
+	struct arg_str *a_pemcrtfn = arg_str0(NULL, "crt", "<file>", "PEM certificate");
+	struct arg_str *a_pemkeyfn = arg_str0(NULL, "key", "<file>", "PEM key");
+
 	// other
 	struct arg_lit *a_verbosity = arg_litn("v", "verbose", 0, 4, "0- quiet (default), 1- errors, 2- warnings, 3- debug, 4- debug libs");
 	struct arg_lit *a_help = arg_lit0("h", "help", "Show this help");
@@ -68,8 +73,8 @@ int WacsHttpConfig::parseCmd
 	void* argtable[] = { 
 		a_root_path, a_port,
 		a_db_path, a_flags, a_mode,
-		a_count,
-		a_daemonize, a_max_fd, 
+		a_count, a_daemonize, 
+		a_pemcrtfn, a_pemkeyfn, a_max_fd, 
 		a_verbosity, a_help, a_end 
 	};
 
@@ -119,11 +124,39 @@ int WacsHttpConfig::parseCmd
 
 	daemonize = a_daemonize->count > 0;
 
+	if (a_pemcrtfn->count > 0)
+	{
+		std::ifstream t(*a_pemcrtfn->sval);
+		pemcrt = std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+		t.close();
+	}
+	else
+		pemcrt = "";
+
+	if (a_pemkeyfn->count > 0)
+	{
+		std::ifstream t(*a_pemkeyfn->sval);
+		pemkey = std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+		t.close();
+	}
+	else
+		pemkey = "";
+
 	if (a_max_fd > 0)
 		max_fd = *a_max_fd->ival;
 	else
 		max_fd = 0;
 
+	if (pemcrt.empty() && !pemkey.empty()) 
+	{
+		std::cerr << "Certificate file read error" << std::endl;
+		nerrors++;
+	}
+	if (pemkey.empty() && !pemcrt.empty()) 
+	{
+		std::cerr << "Key file read error" << std::endl;
+		nerrors++;
+	}
 	// special case: '--help' takes precedence over error reporting
 	if ((a_help->count) || nerrors)
 	{

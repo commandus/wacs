@@ -38,7 +38,10 @@ public:
 	int queue;
 	bool daemonize;
 	int max_fd;										///< 0- use default max file descriptor count per process
-	
+	// SSL options
+	std::string pemkey;
+	std::string pemcrt;
+
 	size_t count;									///< -c
 
 	WacsHttpConfig();

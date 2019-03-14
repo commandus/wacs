@@ -37,6 +37,11 @@ const static char *CT_TTF = "font/ttf";
 const static char *CT_BIN = "application/octet";
 
 const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods";
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_METHOD_LIST = "GET,HEAD,OPTIONS,POST,PUT,DELETE";
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers";
+const static char *HTTP_HEADER_ACCESS_CONTROL_ALLOW_HEADER_LIST = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authentication";
 
 typedef enum
 {
@@ -396,6 +401,19 @@ static void free_file_reader_callback(void *cls)
 	fclose ((FILE *) cls);
 }
 
+void addHeaders
+(
+	struct MHD_Response *response,
+	const char *contentType
+)
+{
+	MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, contentType);
+	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_METHODS, HTTP_HEADER_ACCESS_CONTROL_ALLOW_METHOD_LIST);
+	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_HEADERS, HTTP_HEADER_ACCESS_CONTROL_ALLOW_HEADER_LIST);
+}
+
 static int processFile
 (
 	struct MHD_Connection *connection,
@@ -429,7 +447,7 @@ static int processFile
 			return MHD_NO;
 		}
 
-		MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, mimeTypeByFileExtention(filename));
+		addHeaders(response, mimeTypeByFileExtention(filename));
 		ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
 		MHD_destroy_response (response);
 	}
@@ -536,9 +554,7 @@ static int httpHandler
 		response = MHD_create_response_from_buffer(strlen(MSG500), (void *) MSG500, MHD_RESPMEM_PERSISTENT);
 	else
 		response = MHD_create_response_from_buffer(data.size(), (void *) data.c_str(), MHD_RESPMEM_MUST_COPY);
-	MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, CT_JSON);
-	MHD_add_response_header(response, HTTP_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-
+	addHeaders(response, CT_JSON);
 	ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
 	MHD_destroy_response(response);
 	return ret;
@@ -558,7 +574,17 @@ int run
 {
 	config->stop_request = 0;
 	httpEnv.config = config;
-	mhdDaemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, config->port, NULL, NULL, &httpHandler, (void *) &httpEnv, MHD_OPTION_END);
+	unsigned int flags = MHD_USE_THREAD_PER_CONNECTION;
+	if ((!config->pemcrt.empty()) && (!config->pemkey.empty()))
+	{
+		flags |= MHD_USE_TLS;
+		mhdDaemon = MHD_start_daemon(flags, config->port, NULL, NULL, &httpHandler, (void *) &httpEnv, 
+			MHD_OPTION_HTTPS_MEM_KEY, config->pemkey.c_str(),
+			MHD_OPTION_HTTPS_MEM_CERT, config->pemcrt.c_str(),
+			MHD_OPTION_END);
+	} else {
+		mhdDaemon = MHD_start_daemon(flags, config->port, NULL, NULL, &httpHandler, (void *) &httpEnv, MHD_OPTION_END);
+	}
 	if (!mhdDaemon)
 		return ERRCODE_EXEC;
 	while (!config->stop_request)
