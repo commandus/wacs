@@ -81,6 +81,7 @@ nohup ./wacs-http -p 55550 &
 Start HTTPS server:
 
 ```
+./wacs-http --crt wacs-http.pem --key wacs-http.key
 nohup ./wacs-http --crt wacs-http.pem --key wacs-http.key &
 ```
 
@@ -91,6 +92,32 @@ cd tools
 ./gen-cert.sh
 ```
 produces wacs-http.pem wacs-http.key files.
+
+### Chrome import self-signed certificates
+
+List
+
+```
+certutil -d sql:$HOME/.pki/nssdb -L
+```
+
+Add server
+
+```
+certutil -d sql:$HOME/.pki/nssdb -A -t "P,," -n "221.commandus.com:55550" -i wacs-http.pem
+```
+
+Delete server
+
+```
+certutil -d sql:$HOME/.pki/nssdb -D -n 221.commandus.com:55550
+```
+
+Add CA
+
+```
+certutil -d sql:\$HOME/.pki/nssdb -A -t \"CT,C,C\" -n "ca.commandus.com" -i ca.crt
+```
 
 ### Get list of all MAC addresses:
 
