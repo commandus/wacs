@@ -50,7 +50,7 @@ int WacsHttpConfig::parseCmd
 	char* argv[]
 )
 {
-	struct arg_str *a_root_path = arg_str0("d", "root", "<path>", "Default " DEF_ROOT);
+	struct arg_str *a_root_path = arg_str0("r", "root", "<path>", "Default " DEF_ROOT);
 	struct arg_int *a_port = arg_int0("p", "port", "<number>", "Default " DEF_PORT_STR);
 	struct arg_str *a_db_path = arg_str0(NULL, "dbpath", "<path>", "Database path");
 	struct arg_int *a_flags = arg_int0("f", "flags", "<number>", "LMDB flags. Default 0");
