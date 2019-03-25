@@ -142,7 +142,7 @@ int WacsHttpConfig::parseCmd
 	else
 		pemkey = "";
 
-	if (a_max_fd > 0)
+	if (a_max_fd->count > 0)
 		max_fd = *a_max_fd->ival;
 	else
 		max_fd = 0;

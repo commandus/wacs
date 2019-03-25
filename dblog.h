@@ -39,7 +39,6 @@
 #define mv_size iov_len
 #define mv_data iov_base
 #define MDB_MAP_FULL MDBX_MAP_FULL
-
 #endif
 
 /**

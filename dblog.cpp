@@ -9,6 +9,22 @@
 #include <sys/ipc.h> 
 #include <sys/msg.h> 
 
+#ifdef __MACH__
+#include <libkern/OSByteOrder.h>
+#define htobe16(x) OSSwapHostToBigInt16(x)
+#define htole16(x) OSSwapHostToLittleInt16(x)
+#define be16toh(x) OSSwapBigToHostInt16(x)
+#define le16toh(x) OSSwapLittleToHostInt16(x)
+#define htobe32(x) OSSwapHostToBigInt32(x)
+#define htole32(x) OSSwapHostToLittleInt32(x)
+#define be32toh(x) OSSwapBigToHostInt32(x)
+#define le32toh(x) OSSwapLittleToHostInt32(x)
+#define htobe64(x) OSSwapHostToBigInt64(x)
+#define htole64(x) OSSwapHostToLittleInt64(x)
+#define be64toh(x) OSSwapBigToHostInt64(x)
+#define le64toh(x) OSSwapLittleToHostInt64(x)
+#endif
+
 #include "log.h"
 
 dbenv::dbenv(
@@ -38,10 +54,14 @@ static int processMapFull
 	dbenv *env
 )
 {
-	int r = mdb_txn_abort(env->txn);
-	bool transactionClosed = r != 0;
+	mdb_txn_abort(env->txn);
 	struct MDB_envinfo current_info;
+	int r;
+#ifdef USE_LMDB	
+	r = mdb_env_info(env->env, &current_info);
+#else
 	r = mdb_env_info(env->env, &current_info, sizeof(current_info));
+#endif	
 	if (r)
 	{
 		LOG(ERROR) << "map full, mdb_env_info error " << r << ": " << mdb_strerror(r) << std::endl;
@@ -66,8 +86,7 @@ static int processMapFull
 	if (r)
 		LOG(ERROR) << "map full, mdb_env_set_mapsize error " << r << ": " << mdb_strerror(r) << std::endl;
 	r = mdb_env_open(env->env, env->path.c_str(), env->flags, env->mode);
-	r = mdb_env_close(env->env);
-	
+	mdb_env_close(env->env);
 	if (!openDb(env))
 	{
 		LOG(ERROR) << "map full, error re-open database" << std::endl;
@@ -75,12 +94,9 @@ static int processMapFull
 	}
 
 	// start transaction
-	if (!transactionClosed)
-	{
-		r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
-		if (r)
-			LOG(ERROR) << "map full, begin transaction error " << r << ": " << mdb_strerror(r) << std::endl;
-	}
+	r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
+	if (r)
+		LOG(ERROR) << "map full, begin transaction error " << r << ": " << mdb_strerror(r) << std::endl;
 	return r;
 }
 
@@ -184,13 +200,7 @@ DBG(2)
 	int r = mdb_txn_begin(env->env, NULL, 0, &env->txn);
 	if (r)
 	{
-DBG(r)
-		if (r == MDB_BUSY) 
-		{
-			// TODO
-		}
-		if (r)
-			return ERRCODE_LMDB_TXN_BEGIN;
+		return ERRCODE_LMDB_TXN_BEGIN;
 	}
 DBG(3)
 	// log
@@ -280,6 +290,10 @@ DBG(14)
 		if (r == MDB_MAP_FULL) 
 		{
 			r = processMapFull(env);
+			if (r == 0)
+			{
+				r = mdb_txn_commit(env->txn);
+			}
 		}
 		if (r)
 		{
@@ -824,9 +838,17 @@ int getNotification
 
 	r = doGetNotification(retval, env, sa);
 	if (r < 0)
+#ifdef USE_LMDB	
+		mdb_txn_abort(env->txn);
+#else
 		r = mdb_txn_abort(env->txn);
+#endif
 	else
+#ifdef USE_LMDB		
+		mdb_txn_commit(env->txn);
+#else
 		r = mdb_txn_commit(env->txn);
+#endif		
 	if (r)
 	{
 		LOG(ERROR) << ERR_LMDB_TXN_COMMIT << r << std::endl;

@@ -109,7 +109,7 @@ int WacsConfig::parseCmd
 
 	snmp_agent = a_snmp_agent->count > 0;
 	daemonize = a_daemonize->count > 0;
-	if (a_max_fd > 0)
+	if (a_max_fd->count > 0)
 		max_fd = *a_max_fd->ival;
 	else
 		max_fd = 0;

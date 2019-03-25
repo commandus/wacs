@@ -1,5 +1,6 @@
 SUBDIRS = .
-
+# LMDB=mdbx
+LMDB=lmdb
 # Uncomment for debug
 CFLAGS=-g -O0
 CXXFLAGS=-g -O0
@@ -19,7 +20,8 @@ lib_LIBRARIES = \
 lib_LTLIBRARIES = \
 	libwacs.la
 
-commoncppflags = -O2 -I/usr/local/include -Ithird_party -Ithird_party/ecec
+commoncppflags = -O2 -I/usr/local/include -Ithird_party -Ithird_party/ecec \
+	-DUSE_LMDB -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include
 
 commonlibs = -L.
 
@@ -84,7 +86,7 @@ wacs_SOURCES = \
 	third_party/wpn/utilvapid.cpp \
 	third_party/ecec/base64url.c third_party/ecec/decrypt.c third_party/ecec/encrypt.c third_party/ecec/keys.c third_party/ecec/params.c third_party/ecec/trailer.c \
 	$(common_src)
-wacs_LDADD = $(commonlibs) -lmdbx -lnanomsg \
+wacs_LDADD = $(commonlibs) -l$(LMDB) -lnanomsg \
 	-lnetsnmp -lnetsnmpagent -lpthread -lcurl -lssl
 wacs_CPPFLAGS = $(commoncppflags) -DUSE_SNMP
 
@@ -116,7 +118,7 @@ wacsc_SOURCES = \
 	utilstring.cpp \
 	histogrammacspertime.cpp \
 	$(common_src)
-wacsc_LDADD = $(commonlibs) -lmdbx -lnanomsg
+wacsc_LDADD = $(commonlibs) -l$(LMDB) -lnanomsg
 wacsc_CPPFLAGS = $(commoncppflags)
 
 #
@@ -138,7 +140,7 @@ wacs_http_SOURCES = \
 	utilstring.cpp daemonize.cpp \
 	histogrammacspertime.cpp \
 	$(common_src)
-wacs_http_LDADD = $(commonlibs) -lmicrohttpd -lmdbx
+wacs_http_LDADD = $(commonlibs) -lmicrohttpd -l$(LMDB)
 wacs_http_CPPFLAGS = $(commoncppflags)
 
 #

@@ -12,7 +12,10 @@
 #include <string.h>
 
 #include <sys/stat.h>
+#ifdef __MACH__
+#else
 #include <linux/limits.h>
+#endif
 
 #include "errorcodes.h"
 #include "http-server.h"

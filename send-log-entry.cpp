@@ -6,7 +6,12 @@
 #include "send-log-entry.h"
 #include <stdio.h>
 #include <unistd.h>
+
+#ifdef __MACH__
+#include <mach/error.h>
+#else
 #include <error.h>
+#endif
 #include <netinet/in.h>
 
 #include "log.h"

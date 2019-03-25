@@ -383,10 +383,35 @@ cd tools
 ./install-openssl-1.1.0.sh
 ```
 
-### microhttpd
+Mac OS X
 
 ```
+export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+./configure
+...
+```
+
+### microhttpd
+
+CentOS
+```
 sudo yum install libmicrohttpd-devel
+```
+
+Mac OS X
+```
+brew install libmicrohttpd
+```
+
+### libpq
+
+Mac OS X
+
+```
+brew install libpq
+export LDFLAGS="-L/usr/local/opt/libpq/lib"
+export CPPFLAGS="-I/usr/local/opt/libpq/include"
 ```
 
 ### SNMP
@@ -405,6 +430,12 @@ or full
 sudo apt install libsnmp-dev snmp snmpd snmptrapd 
 ```
 
+Mac OS X
+
+```
+brew install libsnmp snmp snmpd snmptrapd
+```
+
 ### libmdbx (LMDB clone)
 
 [libmdbx](https://github.com/leo-yuriev/libmdbx)
@@ -417,6 +448,22 @@ cd libmdbx
 make
 $ sudo make install
 ```
+
+Mac OS X
+
+```
+brew tap discoteq/discoteq
+brew install flock
+```
+
+fatal error: 'malloc.h' file not found
+
+vi src/osal.h
+
+#if defined(__MACH__)
+#include <stdlib.h>
+#else 
+#include <malloc.h>
 
 #### Issues
 
