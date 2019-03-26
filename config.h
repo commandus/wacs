@@ -29,7 +29,7 @@
 #define HAVE_LIBNETSNMP 1
 
 /* Define to 1 if you have the `pq' library (-lpq). */
-/* #undef HAVE_LIBPQ */
+#define HAVE_LIBPQ 1
 
 /* Define to 1 if you have the <libpq-fe.h> header file. */
 /* #undef HAVE_LIBPQ_FE_H */
@@ -96,7 +96,7 @@
 
 /* Define to 1 if you have the </usr/include/postgresql/libpq-fe.h> header
    file. */
-/* #undef HAVE__USR_INCLUDE_POSTGRESQL_LIBPQ_FE_H */
+#define HAVE__USR_INCLUDE_POSTGRESQL_LIBPQ_FE_H 1
 
 /* Define to 1 if you have the </usr/local/include/pgsql/libpq-fe.h> header
    file. */
