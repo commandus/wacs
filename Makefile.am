@@ -1,12 +1,21 @@
 SUBDIRS = .
-# LMDB=mdbx
+
+if OS_MACH
 LMDB=lmdb
+OS_CPPFLAGS=-DUSE_LMDB -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include
+else
+OS_CPPFLAGS=
+LMDB=mdbx
+endif
+
 # Uncomment for debug
+if DEBUG
 CFLAGS=-g -O0
 CXXFLAGS=-g -O0
+else
+endif
 
 AM_CXXFLAGS = -std=c++11 
-
 ACLOCAL_AMFLAGS = -I m4
 
 #	Binaries
@@ -21,7 +30,7 @@ lib_LTLIBRARIES = \
 	libwacs.la
 
 commoncppflags = -O2 -I/usr/local/include -Ithird_party -Ithird_party/ecec \
-	-DUSE_LMDB -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include
+	$(OS_CPPFLAGS)
 
 commonlibs = -L.
 
