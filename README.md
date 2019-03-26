@@ -236,6 +236,18 @@ grep RX hostapd.log | cut -d ' ' -f 4 | cut -d '=' -f 2 | sort |  uniq
 sudo apt install libgnutls-dev libgcrypt20-dev
 ```
 
+Mac OS X
+
+Update bison, check gcrypt:
+
+```
+brew tap homebrew/dupes && brew install bison
+brew install libgcrypt 
+```
+
+Install [libnl](https://www.infradead.org/~tgr/libnl/files/libnl-3.2.25.tar.gz)
+
+
 [How to build](http://quadfinity.blogspot.com/2014/09/compile-latest-hostapd-v2.3-on-Raspberry-Pi-or-ODROID.html)
 
 ```
@@ -247,10 +259,12 @@ vi Makefile
 #Add lines below line 28:
 CFLAGS +=-I/home/andrei/src/wacs
 LIBS += -L/home/andrei/src/wacs/.libs -lwacs -lnanomsg
-	
 cp defconfig .config
+```
 
-Edit Makefile:
+Edit .config:
+
+```
 CONFIG_TLS=gnutls
 sed -i 's/^#CONFIG_DRIVER_NL80211=y/CONFIG_DRIVER_NL80211=y/g' .config
 #enable 802.11n and 802.11ac
@@ -264,6 +278,11 @@ sed -i 's/^#CONFIG_IEEE80211AC=y/CONFIG_IEEE80211AC=y/g' .config
 #enable automatic channel selection
 sed -i 's/^#CONFIG_ACS=y/CONFIG_ACS=y/g' .config
 
+```
+
+Build:
+
+```
 make && sudo make install
 ```
 
