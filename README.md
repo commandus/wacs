@@ -8,6 +8,8 @@
 
 [Project](https://docs.google.com/document/d/1Xjgj_nK7Dp-szmNC2FTRJLNodoFXepTgCzgeHNKiscw/edit?usp=sharing)
 
+[blog](http://commandus.com/blog/?p=334)
+
 ## INSTALL
 ```
 ./autogen.sh
